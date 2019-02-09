@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import unidecode as u
+import statsmodels.api as sm
 
 
 def get_bootstrap_static_data():
@@ -54,22 +55,7 @@ def calculate_opposition_team(row):
         return team_h
 
 
-# # calculate rolling season average data
-# season_avg_df = element_gameweek_df.groupby('element')[['total_points', 'goals_scored']] \
-#     .rolling(38, min_periods=1).mean().reset_index('element')
-
-# season_avg_df = season_avg_df.join(element_gameweek_df['round'])
-
-# season_avg_df['round'] = element_gameweek_df['round'] + 1
-# season_avg_df.rename(
-#     columns={
-#         'total_points': 'season_avg_total_points',
-#         'goals_scored': 'season_avg_goals_scored'
-#     },
-#     inplace=True)
-
-
-def get_element_df():
+def get_element_gameweek_df():
     bootstrap_static_data = get_bootstrap_static_data()
     fixtures_data = get_fixtures_data()
 
@@ -79,7 +65,7 @@ def get_element_df():
     ['id', 'element_type', 'web_name', 'team']}
     for i in bootstrap_static_data['elements']]
 
-    element_id_arr = [i['id'] for i in element_arr][0:10]
+    element_id_arr = [i['id'] for i in element_arr]
 
     element_df = pd.DataFrame(element_arr)
 
@@ -97,25 +83,44 @@ def get_element_df():
 
     element_gameweek_df.index.name = 'row_id'
 
+    # calculate own team
+    element_gameweek_df['own_team'] = \
+        element_gameweek_df.apply(calculate_own_team, axis=1)
+
+    # calculate opposition team
+    element_gameweek_df['opposition_team'] = \
+        element_gameweek_df.apply(calculate_opposition_team, axis=1)
+
+
     return element_gameweek_df
 
-# # calculate own team
-# element_gameweek_df['own_team'] = \
-#     element_gameweek_df.apply(calculate_own_team, axis=1)
 
-# # calculate opposition team
-# element_gameweek_df['opposition_team'] = \
-#     element_gameweek_df.apply(calculate_opposition_team, axis=1)
+def add_categorical_variables(df, col_name):
+    cat_df = pd.get_dummies(df[col_name], prefix=col_name, drop_first=True)
+    return df.join(cat_df)
 
 
+def add_home_categorical_variable(df):
+    df['was_home'] = df['was_home'].apply(lambda x: int(x == True))
 
 
+def remove_redundant_columns(df, redundant_cols):
+    cols = list(df.columns)
+    
+    for i in redundant_cols:
+        try:
+            cols.remove(i)
+        except:
+            continue
+
+    return df[cols]
 
 
-# element_gameweek_df = \
-#     element_gameweek_df.set_index(['element', 'round']) \
-#         .join(season_avg_df.set_index(['element', 'round'])).reset_index()
+def get_response_explanatory_dfs(df, response_variable):
+    explanatory_variables = list(df.columns)
+    explanatory_variables.remove(response_variable)
 
-# element_gameweek_df.index.name = 'row_id'
+    response_df = df[response_variable]
+    explanatory_df = sm.add_constant(df[explanatory_variables])
 
-
+    return (response_df, explanatory_df)
