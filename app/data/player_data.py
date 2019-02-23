@@ -100,6 +100,12 @@ def add_categorical_variables(df, col_name):
     return df.join(cat_df)
 
 
+def add_interaction_terms(df, col_name, interaction_col):
+    cat_df = pd.get_dummies(df[col_name], prefix=col_name+'_'+interaction_col, drop_first=True)
+    interaction_df = cat_df.multiply(df[interaction_col], axis="index")
+    return df.join(interaction_df)
+
+
 def add_home_categorical_variable(df):
     df['was_home'] = df['was_home'].apply(lambda x: int(x == True))
 
