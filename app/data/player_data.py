@@ -55,15 +55,27 @@ def calculate_opposition_team(row):
         return team_h
 
 
+def get_element_arr(bootstrap_static_data, cols=['id', 'element_type', 'web_name', 'team']):
+    return [{k: i[k] for k in cols}
+    for i in bootstrap_static_data['elements']]
+
+
+def get_element_df(cols):
+    bootstrap_static_data = get_bootstrap_static_data()
+    element_arr = get_element_arr(bootstrap_static_data, cols)
+    element_df = pd.DataFrame(element_arr)
+    element_df['safe_web_name'] = element_df['web_name'].apply(get_safe_web_name)
+
+    return element_df
+
+
 def get_element_gameweek_df():
     bootstrap_static_data = get_bootstrap_static_data()
     fixtures_data = get_fixtures_data()
 
     fixtures_df = get_fixtures_df(fixtures_data)
     
-    element_arr = [{k: i[k] for k in 
-    ['id', 'element_type', 'web_name', 'team']}
-    for i in bootstrap_static_data['elements']]
+    element_arr = get_element_arr(bootstrap_static_data)
 
     element_id_arr = [i['id'] for i in element_arr]
 
