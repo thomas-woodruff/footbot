@@ -15,12 +15,6 @@ def get_safe_web_name(web_name):
     return u.unidecode(web_name).lower()
 
 
-def get_fixtures_data():
-    '''get all data from fixtures endpoint'''
-    fixtures_request = requests.get('https://fantasy.premierleague.com/drf/fixtures/')
-    return fixtures_request.json()
-
-
 def get_element_gameweek_arr(element_id_arr):
     element_gameweek_arr = []
     for element_id in element_id_arr:
@@ -30,7 +24,9 @@ def get_element_gameweek_arr(element_id_arr):
     return element_gameweek_arr
 
 
-def get_fixtures_df(fixtures_data):
+def get_fixtures_df():
+    fixtures_request = requests.get('https://fantasy.premierleague.com/drf/fixtures/')
+    fixtures_data = fixtures_request.json()
     fixtures_arr = [{
         k: i[k]
         for k in
@@ -71,9 +67,8 @@ def get_element_df(cols):
 
 def get_element_gameweek_df():
     bootstrap_static_data = get_bootstrap_static_data()
-    fixtures_data = get_fixtures_data()
 
-    fixtures_df = get_fixtures_df(fixtures_data)
+    fixtures_df = get_fixtures_df()
     
     element_arr = get_element_arr(bootstrap_static_data)
 
