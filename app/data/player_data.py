@@ -142,3 +142,34 @@ def get_response_explanatory_dfs(df, response_variable):
     explanatory_df = sm.add_constant(df[explanatory_variables])
 
     return (response_df, explanatory_df)
+
+
+def filter_gameweek_element_df(gameweek_element_df, current_event, element_types, threshold_minutes):
+    return element_gameweek_df[
+    (element_gameweek_df['event'] <= current_event)
+    & (element_gameweek_df['element_type'].isin(element_types))
+    & (element_gameweek_df['minutes'] >= threshold_minutes)]
+
+
+def get_element_gameweek_rolling_df(rolling_cols):
+    element_gameweek_df = get_element_gameweek_df()
+
+    element_gameweek_df['row_id'] = element_gameweek_df['row_id'].rank()
+    element_gameweek_df['element_fixture_rank'] = element_gameweek_df.groupby('element')['row_id'].rank()
+
+    rolling_df = \
+    element_gameweek_df.copy().groupby('element', as_index=True)[['minutes'] + rolling_cols]\
+    .rolling(38, min_periods=1).sum().reset_index()[['element', 'minutes'] + rolling_cols]
+
+    rolling_df['element_fixture_rank'] = rolling_df.groupby('element')['minutes'].rank()
+    rolling_df['element_fixture_rank'] = rolling_df['element_fixture_rank'] + 1
+
+    element_gameweek_df =\
+    element_gameweek_df.join(
+        rolling_df.set_index(['element', 'element_fixture_rank']),
+        on=['element', 'element_fixture_rank'],
+        rsuffix='_rolling')
+
+    for i in rolling_cols:
+        element_gameweek_df[i + '_per_minute_rolling'] = \
+        element_gameweek_df[i + '_rolling'] / element_gameweek_df['minutes_rolling']
