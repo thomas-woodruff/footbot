@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import unidecode as u
 import statsmodels.api as sm
+import patsy
 
 
 def get_bootstrap_static_data():
