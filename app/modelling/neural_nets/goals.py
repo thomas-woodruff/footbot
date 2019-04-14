@@ -4,9 +4,6 @@ from sklearn.preprocessing import StandardScaler
 
 
 def train_model(X, y):
-	scaler = StandardScaler().fit(X)
-	X = scaler.transform(X)
-
 	model = Sequential()
 	model.add(Dense(units=25, activation='relu', input_shape=(len(X.columns),)))
 	model.add(Dense(units=1, activation='linear'))
@@ -22,7 +19,4 @@ def train_model(X, y):
 
 
 def predict(X_pred):
-	scaler = StandardScaler().fit(X)
-	X = scaler.transform(X)
-
 	return model.predict(X_pred).flatten()
