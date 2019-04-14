@@ -208,6 +208,10 @@ def get_gameweek_fixtures_df(event, threshold_minutes, element_gameweek_df):
         element_df.set_index('team'), on='team')[[
         'own_team', 'opposition_team', 'element', 'was_home', 'element_type']]
 
+    return gameweek_fixtures_df
+
+
+def get_gameweek_fixtures_df(gameweek_fixtures_df)
     f = 'was_home ~ was_home + C(element) + C(opposition_team)'
     _, gameweek_fixtures_explanatory_df = \
     patsy.dmatrices(f, gameweek_fixtures_df, return_type='dataframe')
