@@ -99,7 +99,7 @@ def get_element_gameweek_df():
         element_gameweek_df.apply(calculate_opposition_team, axis=1)
 
 
-    return element_gameweek_df
+    return element_gameweek_df.reset_index()
 
 
 def add_categorical_variables(df, col_name):
