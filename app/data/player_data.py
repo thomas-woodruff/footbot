@@ -174,8 +174,8 @@ def get_gameweek_fixtures_df(event, threshold_minutes, element_gameweek_df):
     element_minute_df = element_gameweek_df.groupby('element', as_index=False)['minutes'].sum()
     elements = element_minute_df[element_minute_df['minutes'] >= threshold_minutes]['element'].values
 
-    fixtures_df = player.get_fixtures_df()
-    element_df = player.get_element_df(['id', 'element_type', 'team', 'web_name'])
+    fixtures_df = get_fixtures_df()
+    element_df = get_element_df(['id', 'element_type', 'team', 'web_name'])
     element_df = element_df[element_df['id'].isin(elements)]
 
     element_df['element'] = element_df['id']
@@ -198,10 +198,10 @@ def get_gameweek_fixtures_df(event, threshold_minutes, element_gameweek_df):
     gameweek_fixtures_df = pd.concat([home_gameweek_fixtures_df, away_gameweek_fixtures_df])
 
     gameweek_fixtures_df['opposition_team'] = \
-    gameweek_fixtures_df.apply(player.calculate_opposition_team, axis=1)
+    gameweek_fixtures_df.apply(calculate_opposition_team, axis=1)
 
     gameweek_fixtures_df['own_team'] = \
-    gameweek_fixtures_df.apply(player.calculate_own_team, axis=1)
+    gameweek_fixtures_df.apply(calculate_own_team, axis=1)
 
     gameweek_fixtures_df = gameweek_fixtures_df.join(
         element_df.set_index('team'), on='team')[[
