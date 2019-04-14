@@ -168,3 +168,42 @@ def get_element_gameweek_rolling_df(rolling_cols):
     for i in rolling_cols:
         element_gameweek_df[i + '_per_minute_rolling'] = \
         element_gameweek_df[i + '_rolling'] / element_gameweek_df['minutes_rolling']
+
+
+def get_gameweek_fixtures_df(event):
+    element_gameweek_df = get_element_gameweek_df()
+    element_minute_df = element_gameweek_df.groupby('element', as_index=False)['minutes'].sum()
+    elements = element_minute_df[element_minute_df['minutes'] >= threshold_minutes]['element'].values
+
+    fixtures_df = player.get_fixtures_df()
+    element_df = player.get_element_df(['id', 'element_type', 'team', 'web_name'])
+    element_df = element_df[element_df['id'].isin(elements)]
+
+    element_df['element'] = element_df['id']
+
+    element_df = element_df[['element_type', 'element', 'team']]
+
+    gameweek_fixtures_df = fixtures_df[
+        fixtures_df['event'] == event
+    ]
+
+    home_gameweek_fixtures_df = gameweek_fixtures_df.copy()
+    home_gameweek_fixtures_df['team'] = home_gameweek_fixtures_df['team_h']
+    home_gameweek_fixtures_df['was_home'] = 1
+
+
+    away_gameweek_fixtures_df = gameweek_fixtures_df.copy()
+    away_gameweek_fixtures_df['team'] = home_gameweek_fixtures_df['team_a']
+    away_gameweek_fixtures_df['was_home'] = 0
+
+    gameweek_fixtures_df = pd.concat([home_gameweek_fixtures_df, away_gameweek_fixtures_df])
+
+    gameweek_fixtures_df['opposition_team'] = \
+    gameweek_fixtures_df.apply(player.calculate_opposition_team, axis=1)
+
+    gameweek_fixtures_df['own_team'] = \
+    gameweek_fixtures_df.apply(player.calculate_own_team, axis=1)
+
+    gameweek_fixtures_df = gameweek_fixtures_df.join(
+        element_df.set_index('team'), on='team')[[
+        'own_team', 'opposition_team', 'element', 'was_home', 'element_type']]
