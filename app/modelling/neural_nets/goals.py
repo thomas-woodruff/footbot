@@ -18,5 +18,5 @@ def train_model(X, y):
 	return model
 
 
-def predict(X_pred):
+def predict(X_pred, model):
 	return model.predict(X_pred).flatten()
