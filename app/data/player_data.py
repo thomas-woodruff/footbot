@@ -170,7 +170,7 @@ def get_element_gameweek_rolling_df(rolling_cols):
         element_gameweek_df[i + '_rolling'] / element_gameweek_df['minutes_rolling']
 
 
-def get_gameweek_fixtures_df(event, element_gameweek_df):
+def get_gameweek_fixtures_df(event, threshold_minutes, element_gameweek_df):
     element_minute_df = element_gameweek_df.groupby('element', as_index=False)['minutes'].sum()
     elements = element_minute_df[element_minute_df['minutes'] >= threshold_minutes]['element'].values
 
