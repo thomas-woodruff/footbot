@@ -94,7 +94,6 @@ def construct_optimal_team_from_scratch(
 	)
 
 	bench_prob.solve()
-	print('bench_x', bench_x.value)
 	bench_selection = [int(round(j)) for j in bench_x.value]
 
 
