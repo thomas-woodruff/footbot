@@ -51,10 +51,10 @@ def construct_optimal_team_from_scratch(
 	bench_cost_x = cp.Variable(len(players), boolean=True)
 
 	bench_cost_prob = cp.Problem(
-	    cp.Minimize(player_costs@bench_x),
+	    cp.Minimize(player_costs@bench_cost_x),
 	    [
-	        np.concatenate((player_position_weights,player_team_weights), axis=0)@bench_x <= np.array(bench_position_capacity + bench_team_capacity),
-	        np.ones(len(players))@bench_x == bench_num
+	        np.concatenate((player_position_weights,player_team_weights), axis=0)@bench_cost_x <= np.array(bench_position_capacity + bench_team_capacity),
+	        np.ones(len(players))@bench_cost_x == bench_num
 	    ]
 	)
 
