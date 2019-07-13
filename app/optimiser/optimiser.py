@@ -110,3 +110,72 @@ def construct_optimal_team_from_scratch(
 	return player_selection_elements, bench_selection_elements
 
 
+def calculate_team_total_points(df, first_team_elements, bench_safe_elements):
+
+    df = df[df['element'].isin(list(first_team_elements) + list(bench_elements))]
+    df['is_first_team'] = df['element'].apply(lambda x: 1 if x in first_team_elements else 0)
+
+    df_group = df.groupby('element')[['predicted_total_points', 'total_points', 'minutes']].sum()
+
+    df = df[['safe_web_name', 'element', 'value', 'element_type', 'is_first_team']].drop_duplicates()
+
+    df = df.join(df_group, on='element')
+
+    df.sort_values('predicted_total_points', ascending=False, inplace=True)
+
+    captain_selection = df.iloc[0]['element']
+    vice_selection = df.iloc[1]['element']
+
+    is_captain_missing = len(df[(df['element'] == captain_selection) & (df['minutes'] == 0)])
+
+    if is_captain_missing:
+        df['is_captain'] = df['element'].apply(lambda x: 1 if x == vice_selection else 0)
+    else:
+        df['is_captain'] = df['element'].apply(lambda x: 1 if x == captain_selection else 0)
+
+    missing_players = list(df[(df['minutes'] == 0) & (df['is_first_team'] == 1)]['element'])
+    num_missing_players = len(missing_players)
+
+    if num_missing_players > 0:
+
+        num_keepers = 1
+        min_defenders = 3
+        min_midfielders = 2
+        min_strikers = 1
+
+        df[df['minutes'] == 0]
+
+        for i in range(0, min(3, num_missing_players)):
+            substitute = df[df['is_first_team'] == 0].iloc[i]['element']
+
+            for missing_player in missing_players:
+                sub_loop_df = df.copy()
+
+                sub_loop_df.loc[sub_loop_df['element'] == substitute,'is_first_team'] = 1
+                sub_loop_df.loc[sub_loop_df['element'] == missing_player,'is_first_team'] = 0
+
+                num_team_keepers = len(
+                    sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 1)])
+                num_team_defenders = len(
+                    sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 2)])
+                num_team_midfielders = len(
+                    sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 3)])
+                num_team_strikers = len(
+                    sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 4)])
+
+                if (
+                    (num_team_keepers == num_keepers)
+                    & (num_team_defenders >= min_defenders)
+                    & (num_team_midfielders >= min_midfielders)
+                    & (num_team_strikers >= min_strikers)
+                ):
+                    df = sub_loop_df.copy()
+                    missing_players = df[(df['minutes'] == 0) & (df['is_first_team'] == 1)]
+                    num_missing_players = len(missing_players)
+                    break
+
+
+    team_total_points = \
+    sum(df[df['is_first_team'] == 1]['total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
+
+    return team_total_points, df
