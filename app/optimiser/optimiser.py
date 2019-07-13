@@ -153,7 +153,7 @@ def calculate_team_total_points(df, first_team_elements, bench_elements):
             substitute = df[df['is_first_team'] == 0].iloc[i]['element']
 
             for missing_player in missing_players:
-            	print(missing_player)
+                print(missing_player)
                 sub_loop_df = df.copy()
 
                 sub_loop_df.loc[sub_loop_df['element'] == substitute,'is_first_team'] = 1
