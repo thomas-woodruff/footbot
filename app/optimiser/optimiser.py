@@ -64,10 +64,6 @@ def construct_optimal_team_from_scratch(
 
 	bench_x = cp.Variable(len(players), boolean=True)
 
-	print('bench_x', len(players))
-	print('player_weights', player_weights.shape)
-	print('bench_capacity', bench_capacity.shape)
-
 	bench_prob = cp.Problem(
 	    cp.Maximize(player_points@bench_x),
 	    [
@@ -101,7 +97,7 @@ def construct_optimal_team_from_scratch(
 	    [
 	        player_weights@player_x <= player_capacity,
 	        np.ones(len(players))@player_x == player_num,
-	        np.array(bench_selection)@bench_x <= 0.01
+	        np.array(bench_selection)@player_x <= 0.01
 	    ]
 	)
 
