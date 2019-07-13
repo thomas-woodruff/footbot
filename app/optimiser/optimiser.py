@@ -66,6 +66,7 @@ def construct_optimal_team_from_scratch(
 
 	print('bench_x', len(players))
 	print('player_weights', player_weights.shape)
+	print('bench_capacity', bench_capacity.shape)
 
 	bench_prob = cp.Problem(
 	    cp.Maximize(player_points@bench_x),
