@@ -53,7 +53,7 @@ def construct_optimal_team_from_scratch(
 	player_num = 11
 	bench_num = 4
 
-	bench_team_capacity = [3*20] #list(player_team_capacity - player_team_weights@player_selection)	
+	bench_team_capacity = [3]*20 #list(player_team_capacity - player_team_weights@player_selection)	
 	bench_cost_capacity = [min_cost_bench] #[total_budget - player_selection_cost]
 
 	bench_capacity = np.array(
