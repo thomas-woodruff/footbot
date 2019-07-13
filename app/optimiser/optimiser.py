@@ -137,7 +137,9 @@ def calculate_team_total_points(df, first_team_elements, bench_elements):
         df['is_captain'] = df['element'].apply(lambda x: 1 if x == captain_selection else 0)
 
     missing_players = list(df[(df['minutes'] == 0) & (df['is_first_team'] == 1)]['element'])
+    present_bench_players = list(df[(df['minutes'] > 0) & (df['is_first_team'] == 0)]['element'])
     num_missing_players = len(missing_players)
+    num_present_bench_players = len(present_bench_players)
 
     if num_missing_players > 0:
 
@@ -148,7 +150,7 @@ def calculate_team_total_points(df, first_team_elements, bench_elements):
 
         df[df['minutes'] == 0]
 
-        for i in range(0, min(3, num_missing_players)):
+        for i in range(0, min(3, num_missing_players, num_present_bench_players)):
             substitute = df[df['is_first_team'] == 0].iloc[i]['element']
 
             for missing_player in missing_players:
