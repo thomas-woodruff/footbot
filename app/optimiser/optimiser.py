@@ -45,9 +45,7 @@ def construct_optimal_team_from_scratch(
 	bench_position_capacity = list(np.array([2, 5, 5, 3]) - np.array(player_position_capacity))
 	bench_team_capacity = [3]*20
 
-
-
-
+	
 	bench_cost_x = cp.Variable(len(players), boolean=True)
 
 	bench_cost_prob = cp.Problem(
@@ -58,21 +56,8 @@ def construct_optimal_team_from_scratch(
 	    ]
 	)
 
-	min_cost_bench = bench_cost_prob.solve()
-
-
-
-
-
-	# min_cost_keeper = np.min([i['value'] for i in players if i['element_type'] == 1])
-	# min_cost_defender = np.min([i['value'] for i in players if i['element_type'] == 2])
-	# min_cost_midfielder = np.min([i['value'] for i in players if i['element_type'] == 3])
-	# min_cost_striker = np.min([i['value'] for i in players if i['element_type'] == 4])
-	# min_cost_bench = \
-	# bench_position_capacity@np.array([min_cost_keeper, min_cost_defender, min_cost_midfielder, min_cost_striker])
-
 	
-	bench_cost_capacity = [min_cost_bench]
+	bench_cost_capacity = [bench_cost_prob.solve()]
 
 	bench_capacity = np.array(
 	    bench_cost_capacity
@@ -98,7 +83,7 @@ def construct_optimal_team_from_scratch(
 
 	player_num = 11
 	player_cost_capacity = [total_budget - min_cost_bench]
-	player_team_capacity = list(bench_team_capacity - player_team_weights@bench_selection) #[3]*20
+	player_team_capacity = list(bench_team_capacity - player_team_weights@bench_selection)
 
 	player_capacity = np.array(
 	    player_cost_capacity
