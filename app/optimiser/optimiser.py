@@ -72,9 +72,13 @@ def construct_optimal_team_from_scratch(
 
 	player_prob.solve()
 	player_selection = [int(round(j)) for j in player_x.value]
+	player_selection_cost = abs(round((player_costs@player_x.value)[0]))
+	print('player_selection_cost', player_selection_cost)
 
 	bench_team_capacity = list(player_team_capacity - player_team_weights@player_selection)	
-	bench_cost_capacity = [min_cost_bench + total_budget - abs(round((player_costs@player_x.value)[0]))]
+	bench_cost_capacity = [min_cost_bench + total_budget - player_selection_cost]
+	print('min_cost_bench', min_cost_bench)
+	print('bench_cost_capacity', bench_cost_capacity)
 
 	bench_capacity = np.array(
 	    bench_cost_capacity
@@ -89,7 +93,7 @@ def construct_optimal_team_from_scratch(
 	    [
 	        player_weights@bench_x <= bench_capacity,
 	        np.ones(len(players))@bench_x == bench_num,
-	        np.array(player_selection)@bench_x <= 0.1
+	        np.array(player_selection)@bench_x <= 0.01
 	    ]
 	)
 
