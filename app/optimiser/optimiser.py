@@ -111,8 +111,11 @@ def construct_optimal_team_from_scratch(
 
 
 def calculate_team_total_points(df, first_team_elements, bench_elements):
-
+    df = df.copy()
     df = df[df['element'].isin(list(first_team_elements) + list(bench_elements))]
+    df['is_first_team'] = 0
+    df.loc[df['element'].isin(list(first_team_elements)),'is_first_team'] = 1
+
     df['is_first_team'] = df['element'].apply(lambda x: 1 if x in first_team_elements else 0)
 
     df_group = df.groupby('element')[['predicted_total_points', 'total_points', 'minutes']].sum()
@@ -178,4 +181,7 @@ def calculate_team_total_points(df, first_team_elements, bench_elements):
     team_total_points = \
     sum(df[df['is_first_team'] == 1]['total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
 
-    return team_total_points, df
+    team_predicted_total_points = \
+    sum(df[df['is_first_team'] == 1]['predicted_total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
+
+    return team_total_points, team_predicted_total_points, df
