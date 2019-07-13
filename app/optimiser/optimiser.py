@@ -77,8 +77,11 @@ def construct_optimal_team_from_scratch(
 	    ]
 	)
 
-	bench_prob.solve()
+	bench_prob.solve(verbose=True)
 	bench_selection = [int(round(j)) for j in bench_x.value]
+	bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
+	bench_selection_elements = player_elements[bench_selection_indices]
+	print('bench_selection_elements', bench_selection_elements)
 
 
 	player_cost_capacity = [total_budget - min_cost_bench]
@@ -101,14 +104,10 @@ def construct_optimal_team_from_scratch(
 	    ]
 	)
 
-	player_prob.solve()
+	player_prob.solve(verbose=True)
 	player_selection = [int(round(j)) for j in player_x.value]
-
 	player_selection_indices = [i for i, j in enumerate(player_selection) if j == 1]
-	bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
-
 	player_selection_elements = player_elements[player_selection_indices]
-	bench_selection_elements = player_elements[bench_selection_indices]
 
 	return player_selection_elements, bench_selection_elements
 
