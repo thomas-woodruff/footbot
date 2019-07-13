@@ -110,7 +110,7 @@ def construct_optimal_team_from_scratch(
 	return player_selection_elements, bench_selection_elements
 
 
-def calculate_team_total_points(df, first_team_elements, bench_safe_elements):
+def calculate_team_total_points(df, first_team_elements, bench_elements):
 
     df = df[df['element'].isin(list(first_team_elements) + list(bench_elements))]
     df['is_first_team'] = df['element'].apply(lambda x: 1 if x in first_team_elements else 0)
