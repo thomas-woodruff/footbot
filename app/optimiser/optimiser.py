@@ -43,39 +43,18 @@ def construct_optimal_team_from_scratch(
 	min_cost_bench = \
 	bench_position_capacity@np.array([min_cost_keeper, min_cost_defender, min_cost_midfielder, min_cost_striker])
 
-	player_cost_capacity = [total_budget - min_cost_bench]
-	player_team_capacity = [3]*20
 
 	player_weights = np.concatenate((
 	    player_costs,
 	    player_position_weights,
 	    player_team_weights
 	), axis=0)
-	player_capacity = np.array(
-	    player_cost_capacity
-	    + player_position_capacity
-	    + player_team_capacity
-	)
-
+	
 	player_num = 11
 	bench_num = 4
 
-	player_x = cp.Variable(len(players), boolean=True)
-
-	player_prob = cp.Problem(
-	    cp.Maximize(player_points@player_x),
-	    [
-	        player_weights@player_x <= player_capacity,
-	        np.ones(len(players))@player_x == player_num
-	    ]
-	)
-
-	player_prob.solve()
-	player_selection = [int(round(j)) for j in player_x.value]
-	player_selection_cost = abs(round((player_costs@player_x.value)[0]))
-
-	bench_team_capacity = list(player_team_capacity - player_team_weights@player_selection)	
-	bench_cost_capacity = [total_budget - player_selection_cost]
+	bench_team_capacity = [3*20] #list(player_team_capacity - player_team_weights@player_selection)	
+	bench_cost_capacity = [min_cost_bench] #[total_budget - player_selection_cost]
 
 	bench_capacity = np.array(
 	    bench_cost_capacity
@@ -90,13 +69,36 @@ def construct_optimal_team_from_scratch(
 	    [
 	        player_weights@bench_x <= bench_capacity,
 	        np.ones(len(players))@bench_x == bench_num,
-	        np.array(player_selection)@bench_x <= 0.01
+	        #np.array(player_selection)@bench_x <= 0.01
 	    ]
 	)
 
 	bench_prob.solve()
 	bench_selection = [int(round(j)) for j in bench_x.value]
 
+
+	player_cost_capacity = [total_budget - min_cost_bench]
+	player_team_capacity = list(bench_team_capacity - player_team_weights@bench_selection) #[3]*20
+
+	player_capacity = np.array(
+	    player_cost_capacity
+	    + player_position_capacity
+	    + player_team_capacity
+	)
+
+	player_x = cp.Variable(len(players), boolean=True)
+
+	player_prob = cp.Problem(
+	    cp.Maximize(player_points@player_x),
+	    [
+	        player_weights@player_x <= player_capacity,
+	        np.ones(len(players))@player_x == player_num,
+	        np.array(bench_selection)@bench_x <= 0.01
+	    ]
+	)
+
+	player_prob.solve()
+	player_selection = [int(round(j)) for j in player_x.value]
 
 	player_selection_indices = [i for i, j in enumerate(player_selection) if j == 1]
 	bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
