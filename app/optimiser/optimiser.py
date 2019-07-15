@@ -12,7 +12,7 @@ def construct_optimal_team_from_scratch(
 	):
 
 	player_elements = np.array([i['element'] for i in players])
-	player_points = np.array([i[optimise_key] for i in players])/38
+	player_points = np.array([i[optimise_key] for i in players])
 	player_costs = np.array([[i['value'] for i in players]])
 	player_position = np.array([i['element_type'] for i in players])
 	player_team = np.array([i['team'] for i in players])
@@ -57,7 +57,7 @@ def construct_optimal_team_from_scratch(
 	)
 
 	
-	bench_cost_capacity = [bench_cost_prob.solve()]
+	bench_cost_capacity = [bench_cost_prob.solve(solver='GLPK_MI')]
 
 	bench_capacity = np.array(
 	    bench_cost_capacity
@@ -75,7 +75,7 @@ def construct_optimal_team_from_scratch(
 	    ]
 	)
 
-	bench_prob.solve()
+	bench_prob.solve(solver='GLPK_MI')
 	bench_selection = [int(round(j)) for j in bench_x.value]
 	bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
 	bench_selection_elements = player_elements[bench_selection_indices]
@@ -102,12 +102,95 @@ def construct_optimal_team_from_scratch(
 	    ]
 	)
 
-	player_prob.solve()
+	player_prob.solve(solver='GLPK_MI')
 	player_selection = [int(round(j)) for j in player_x.value]
 	player_selection_indices = [i for i, j in enumerate(player_selection) if j == 1]
 	player_selection_elements = player_elements[player_selection_indices]
 
 	return player_selection_elements, bench_selection_elements
+
+
+def construct_optimal_team_from_existing(
+	players,
+	first_team_elements,
+	bench_elements,
+	total_budget=1000,
+	optimise_key='predicted_total_points',
+	black_list_players=[]
+	):
+
+	if len(bench_elements) != 4 or len(first_team_elements) != 11:
+		raise Exception('bench does not contain 4 players', bench_elements)
+
+	if len(first_team_elements) != 11:
+		raise Exception('first team does not contain 11 players', first_team_elements)
+
+	player_elements = np.array([i['element'] for i in players])
+	player_points = np.array([i[optimise_key] for i in players])
+	player_costs = np.array([[i['value'] for i in players]])
+	player_position = np.array([i['element_type'] for i in players])
+	player_team = np.array([i['team'] for i in players])
+
+	player_position_weights = np.zeros((4, len(players)))
+	for i in range(0, 4):
+	    for j in range(0, len(players)):
+	        if player_position[j] == i+1:
+	            player_position_weights[i, j] = 1
+	        else:
+	            player_position_weights[i, j] = 0
+
+	player_team_weights = np.zeros((20, len(players)))
+	for i in range(0, 20):
+	    for j in range(0, len(players)):
+	        if player_team[j] == i+1:
+	            player_team_weights[i, j] = 1
+	        else:
+	            player_team_weights[i, j] = 0
+
+	player_weights = np.concatenate((
+	    player_costs,
+	    player_position_weights,
+	    player_team_weights
+	), axis=0)
+
+	existing_x = [1 if i in first_team_elements else 0 for i in player_elements]
+	bench_selection = [1 if i in bench_elements else 0 for i in player_elements]
+	bench_cost = sum([i['value'] for i in players if i['element'] in bench_elements])
+
+	player_num = 11
+	player_cost_capacity = [total_budget - bench_cost]
+	player_position_capacity = list([2, 5, 5, 3] - player_position_weights@bench_selection)
+	player_team_capacity = list([3] * 20 - player_team_weights@bench_selection)
+
+
+	player_capacity = np.array(
+	    player_cost_capacity
+	    + player_position_capacity
+	    + player_team_capacity
+	)
+
+	player_x = cp.Variable(len(players), boolean=True)
+
+	player_prob = cp.Problem(
+	    cp.Maximize(
+			player_points@player_x - 4*( 11 - np.array(existing_x)@player_x ) ),
+		[
+			player_weights@player_x <= player_capacity,
+			np.ones(len(players))@player_x == player_num,
+			np.array(bench_selection)@player_x <= 0.01
+		]
+	)
+
+	player_prob.solve(solver='GLPK_MI')
+	player_selection = [int(round(j)) for j in player_x.value]
+	player_selection_indices = [i for i, j in enumerate(player_selection) if j == 1]
+	player_selection_elements = player_elements[player_selection_indices]
+
+	bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
+	bench_selection_elements = player_elements[bench_selection_indices]
+
+
+	return player_selection_elements, bench_elements
 
 
 def calculate_team_total_points(df, first_team_elements, bench_elements):
