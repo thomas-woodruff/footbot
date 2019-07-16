@@ -198,7 +198,12 @@ def construct_optimal_team_from_existing(
 	return player_selection_elements, bench_elements, transfers
 
 
-def calculate_team_total_points(df, first_team_elements, bench_elements, num_transfers):
+def calculate_team_total_points(df,
+								first_team_elements,
+								bench_elements,
+								num_transfers=0,
+								carried_over_transfers=0,
+								):
     df = df.copy()
     df = df[df['element'].isin(list(first_team_elements) + list(bench_elements))]
     df['is_first_team'] = 0
@@ -268,7 +273,7 @@ def calculate_team_total_points(df, first_team_elements, bench_elements, num_tra
                     break
 
 
-    transfer_cost = max(num_transfers - 1, 0) * 4
+    transfer_cost = max(num_transfers - carried_over_transfers - 1, 0) * 4
 
     team_total_points = \
     sum(df[df['is_first_team'] == 1]['total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
