@@ -118,7 +118,7 @@ def construct_optimal_team_from_existing(
 	optimise_key='predicted_total_points',
 	black_list_players=[],
 	transfer_penalty=4,
-	transfer_limit=3
+	transfer_limit=11
 	):
 
 	if len(bench_elements) != 4 or len(first_team_elements) != 11:
