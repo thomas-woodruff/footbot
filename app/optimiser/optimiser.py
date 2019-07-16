@@ -117,7 +117,8 @@ def construct_optimal_team_from_existing(
 	total_budget=1000,
 	optimise_key='predicted_total_points',
 	black_list_players=[],
-	transfer_penalty=4
+	transfer_penalty=4,
+	transfer_limit=3
 	):
 
 	if len(bench_elements) != 4 or len(first_team_elements) != 11:
@@ -178,7 +179,8 @@ def construct_optimal_team_from_existing(
 		[
 			player_weights@player_x <= player_capacity,
 			np.ones(len(players))@player_x == player_num,
-			np.array(bench_selection)@player_x <= 0.01
+			np.array(bench_selection)@player_x <= 0.01,
+			np.array(existing_x)@player_x >= 11 - transfer_limit
 		]
 	)
 
