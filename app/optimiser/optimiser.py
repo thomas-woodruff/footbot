@@ -187,11 +187,13 @@ def construct_optimal_team_from_existing(
 	player_selection_indices = [i for i, j in enumerate(player_selection) if j == 1]
 	player_selection_elements = player_elements[player_selection_indices]
 
-	bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
-	bench_selection_elements = player_elements[bench_selection_indices]
+	transfers = [
+		set(player_selection_elements) - set(first_team_elements),
+		set(first_team_elements) - set(player_selection_elements),
+	]
 
 
-	return player_selection_elements, bench_elements
+	return player_selection_elements, bench_elements, transfers
 
 
 def calculate_team_total_points(df, first_team_elements, bench_elements, num_transfers):
