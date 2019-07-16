@@ -116,7 +116,8 @@ def construct_optimal_team_from_existing(
 	bench_elements,
 	total_budget=1000,
 	optimise_key='predicted_total_points',
-	black_list_players=[]
+	black_list_players=[],
+	transfer_penalty=4
 	):
 
 	if len(bench_elements) != 4 or len(first_team_elements) != 11:
@@ -173,7 +174,7 @@ def construct_optimal_team_from_existing(
 
 	player_prob = cp.Problem(
 	    cp.Maximize(
-			player_points@player_x - 4*( 11 - np.array(existing_x)@player_x ) ),
+			player_points@player_x - transfer_penalty*( 11 - np.array(existing_x)@player_x ) ),
 		[
 			player_weights@player_x <= player_capacity,
 			np.ones(len(players))@player_x == player_num,
@@ -193,7 +194,7 @@ def construct_optimal_team_from_existing(
 	return player_selection_elements, bench_elements
 
 
-def calculate_team_total_points(df, first_team_elements, bench_elements):
+def calculate_team_total_points(df, first_team_elements, bench_elements, num_transfers):
     df = df.copy()
     df = df[df['element'].isin(list(first_team_elements) + list(bench_elements))]
     df['is_first_team'] = 0
@@ -263,10 +264,12 @@ def calculate_team_total_points(df, first_team_elements, bench_elements):
                     break
 
 
+    transfer_cost = max(num_transfers - 1, 0) * 4
+
     team_total_points = \
     sum(df[df['is_first_team'] == 1]['total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
 
     team_predicted_total_points = \
     sum(df[df['is_first_team'] == 1]['predicted_total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
 
-    return team_total_points, team_predicted_total_points, df
+    return team_total_points - transfer_cost, team_predicted_total_points, df
