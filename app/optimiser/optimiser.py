@@ -201,10 +201,12 @@ def construct_optimal_team_from_existing(
 def calculate_team_total_points(df,
 								first_team_elements,
 								bench_elements,
+								event,
 								num_transfers=0,
-								carried_over_transfers=0,
+								carried_over_transfers=0
 								):
     df = df.copy()
+    df = df[df['event'] == event]
     df = df[df['element'].isin(list(first_team_elements) + list(bench_elements))]
     df['is_first_team'] = 0
     df.loc[df['element'].isin(list(first_team_elements)),'is_first_team'] = 1
