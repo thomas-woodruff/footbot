@@ -1,11 +1,24 @@
 import logging
 import schedule
 import time
-from footbot.data import element_data
+from footbot.data import element_data, utils
 
 
 def element_data_job():
-    element_data.write_to_table()
+    element_df = element_data.get_element_df()
+    utils.write_to_table('fpl',
+                         'element_data',
+                         element_df)
+
+    element_history_df, element_fixtures_df = element_data.get_element_summary_dfs()
+    utils.write_to_table('fpl',
+                         'element_gameweeks',
+                         element_history_df,
+                         write_disposition='WRITE_TRUNCATE')
+    utils.write_to_table('fpl',
+                         'element_future_fixtures',
+                         element_fixtures_df,
+                         write_disposition='WRITE_TRUNCATE')
 
 
 def main():

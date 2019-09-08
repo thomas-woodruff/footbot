@@ -1,10 +1,7 @@
 import pandas as pd
 import requests
 import datetime
-from footbot.data.utils import get_safe_web_name
-import os
-from google.cloud import bigquery
-import time
+from footbot.data import utils
 
 
 def get_element_df():
@@ -21,7 +18,7 @@ def get_element_df():
     element_df['element'] = element_df['id']
     element_df['current_event'] = current_event
     element_df['datetime'] = current_datetime
-    element_df['safe_web_name'] = element_df['web_name'].apply(get_safe_web_name)
+    element_df['safe_web_name'] = element_df['web_name'].apply(utils.get_safe_web_name)
 
     element_df = element_df[[
         'element', 'current_event', 'datetime', 'safe_web_name', 'assists', 'bonus', 'bps',
@@ -42,30 +39,59 @@ def get_element_df():
     return element_df
 
 
-def write_to_table():
-    '''write element data to bigquery table'''
-    try:
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './secrets/service_account.json'
-        client = bigquery.Client()
+def get_element_summary_data():
+    '''Loop through element summaries'''
+    bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
+    bootstrap_data = bootstrap_request.json()
 
-        dataset_ref = client.dataset('fpl')
-        table_ref = dataset_ref.table('element_data')
+    max_element = max([i['id'] for i in bootstrap_data['elements']])
 
-        df = get_element_df()
+    element_history_arr = []
+    element_fixtures_arr = []
+    element_history_past_arr = []
 
-        filename = './csvs/element_data_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        df.to_csv(filename, index=False)
+    for i in range(1, max_element + 1):
+        try:
+            element_request = requests.get(f'https://fantasy.premierleague.com/api/element-summary/{i}/')
+            element_data = element_request.json()
 
-        time.sleep(3)
+            element_history_arr.extend(element_data['history'])
 
-        with open(filename, 'rb') as source_file:
-            job_config = bigquery.LoadJobConfig()
-            job_config.skip_leading_rows = 1
-            client.load_table_from_file(
-                source_file, table_ref, job_config=job_config)
+            element_fixtures_arr.extend(
+                [utils.update_return_dict(k, 'element', i) for k in element_data['fixtures']])
 
-        time.sleep(3)
-        os.remove(filename)
+            element_history_past_arr.extend(
+                [utils.update_return_dict(k, 'element', i) for k in element_data['history_past']])
+        except:
+            continue
 
-    except Exception as e:
-        print(e)
+    return element_history_arr, element_fixtures_arr, element_history_past_arr
+
+
+def get_element_summary_dfs():
+    '''get element gameweek and future fixture data'''
+    element_history_arr, element_fixtures_arr, _ = get_element_summary_data()
+
+    element_history_df = pd.DataFrame(element_history_arr)
+    element_history_df.columns = ['event' if i == 'round' else i for i in element_history_df.columns]
+
+    element_fixtures_df = pd.DataFrame(element_fixtures_arr)
+    element_fixtures_df = element_fixtures_df[
+        ['element']
+        + list(element_fixtures_df.columns)[:-1]
+        ]
+
+    return element_history_df, element_fixtures_df
+
+
+def get_element_past_history_df():
+    '''get element past season data'''
+    _, _, element_history_past_arr = get_element_summary_data()
+
+    element_history_past_df = pd.DataFrame(element_history_past_arr)
+    element_history_past_df = element_history_past_df[
+        ['element']
+        + list(element_history_past_df.columns)[:-1]
+        ]
+
+    return element_history_past_df
