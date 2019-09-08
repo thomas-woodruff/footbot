@@ -2,3 +2,4 @@ venv
 .idea
 **/*.pyc
 **/*checkpoint.ipynb
+secrets
