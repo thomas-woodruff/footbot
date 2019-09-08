@@ -2,6 +2,9 @@ import pandas as pd
 import requests
 import datetime
 from footbot.data.utils import get_safe_web_name
+import os
+from google.cloud import bigquery
+import time
 
 
 def get_element_df():
@@ -11,7 +14,7 @@ def get_element_df():
 
     current_event = [i for i in bootstrap_data['events'] if i['is_current']][0]['id']
 
-    current_datetime = str(datetime.datetime.now())
+    current_datetime = datetime.datetime.now()
 
     element_df = pd.DataFrame(bootstrap_data['elements'])
 
@@ -37,3 +40,31 @@ def get_element_df():
     ]]
 
     return element_df
+
+
+def write_to_table():
+    '''write element data to bigquery table'''
+    try:
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './secrets/service_account.json'
+        client = bigquery.Client()
+
+        dataset_ref = client.dataset('fpl')
+        table_ref = dataset_ref.table('element_data')
+
+        df = get_element_df()
+
+        filename = './csvs/element_data_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        df.to_csv(filename, index=False)
+
+        time.sleep(10)
+
+        with open(filename, 'rb') as source_file:
+            job_config = bigquery.LoadJobConfig()
+            job_config.skip_leading_rows = 1
+            client.load_table_from_file(
+                source_file, table_ref, job_config=job_config)
+
+        time.sleep(10)
+        os.remove(filename)
+    except Exception as e:
+        print(e)

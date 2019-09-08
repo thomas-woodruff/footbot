@@ -2,12 +2,10 @@ import logging
 import schedule
 import time
 from footbot.data import element_data
-# from footbot.api import server
 
 
 def element_data_job():
-    element_data.get_element_df()
-    print('ahoy!')
+    element_data.write_to_table()
 
 
 def main():
@@ -15,11 +13,7 @@ def main():
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     logger = logging.getLogger(__name__)
 
-    schedule.every().minute.at(":17").do(element_data_job)
-
-    # logger.info("starting server")
-    # server.run()
-    # logger.info("done")
+    schedule.every(1).minutes.do(element_data_job)
 
     logger.info("starting schedule")
     while True:
