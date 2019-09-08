@@ -18,7 +18,7 @@ def get_element_df():
     element_df['element'] = element_df['id']
     element_df['current_event'] = current_event
     element_df['datetime'] = current_datetime
-    element_df['safe_web_name'] = get_safe_web_name(element_df['web_name'])
+    element_df['safe_web_name'] = element_df['web_name'].apply(get_safe_web_name)
 
     element_df = element_df[[
         'element', 'current_event', 'datetime', 'safe_web_name', 'assists', 'bonus', 'bps',
