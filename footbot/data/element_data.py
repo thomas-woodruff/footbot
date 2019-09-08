@@ -66,5 +66,6 @@ def write_to_table():
 
         time.sleep(10)
         os.remove(filename)
+
     except Exception as e:
         print(e)

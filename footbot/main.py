@@ -9,17 +9,17 @@ def element_data_job():
 
 
 def main():
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     logger = logging.getLogger(__name__)
 
-    schedule.every(1).minutes.do(element_data_job)
+    schedule.every().day.at('10:30').do(element_data_job)
 
-    logger.info("starting schedule")
+    logger.info('starting schedule')
     while True:
         schedule.run_pending()
         time.sleep(1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
