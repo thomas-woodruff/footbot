@@ -7,16 +7,16 @@ from footbot.data import element_data, utils
 def element_data_job():
     element_df = element_data.get_element_df()
     utils.write_to_table('fpl',
-                         'element_data',
+                         'element_data_1920',
                          element_df)
 
     element_history_df, element_fixtures_df = element_data.get_element_summary_dfs()
     utils.write_to_table('fpl',
-                         'element_gameweeks',
+                         'element_gameweeks_1920',
                          element_history_df,
                          write_disposition='WRITE_TRUNCATE')
     utils.write_to_table('fpl',
-                         'element_future_fixtures',
+                         'element_future_fixtures_1920',
                          element_fixtures_df,
                          write_disposition='WRITE_TRUNCATE')
 
@@ -26,8 +26,7 @@ def main():
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     logger = logging.getLogger(__name__)
 
-    # schedule.every().day.at('09:30').do(element_data_job)
-    schedule.every(60).seconds.do(element_data_job)
+    schedule.every().day.at('09:30').do(element_data_job)
 
     logger.info('starting schedule')
     while True:
