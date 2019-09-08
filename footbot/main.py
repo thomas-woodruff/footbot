@@ -13,7 +13,7 @@ def main():
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     logger = logging.getLogger(__name__)
 
-    schedule.every().day.at('10:30').do(element_data_job)
+    schedule.every().day.at('09:30').do(element_data_job)
 
     logger.info('starting schedule')
     while True:

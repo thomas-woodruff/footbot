@@ -56,7 +56,7 @@ def write_to_table():
         filename = './csvs/element_data_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         df.to_csv(filename, index=False)
 
-        time.sleep(10)
+        time.sleep(3)
 
         with open(filename, 'rb') as source_file:
             job_config = bigquery.LoadJobConfig()
@@ -64,7 +64,7 @@ def write_to_table():
             client.load_table_from_file(
                 source_file, table_ref, job_config=job_config)
 
-        time.sleep(10)
+        time.sleep(3)
         os.remove(filename)
 
     except Exception as e:
