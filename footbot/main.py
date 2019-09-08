@@ -2,6 +2,7 @@ import logging
 import schedule
 import time
 from footbot.data import element_data
+# from footbot.api import server
 
 
 def element_data_job():
@@ -15,6 +16,10 @@ def main():
     logger = logging.getLogger(__name__)
 
     schedule.every().minute.at(":17").do(element_data_job)
+
+    # logger.info("starting server")
+    # server.run()
+    # logger.info("done")
 
     logger.info("starting schedule")
     while True:
