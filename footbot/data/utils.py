@@ -21,7 +21,8 @@ def write_to_table(
         table,
         df,
         write_disposition='WRITE_APPEND',
-        secrets_path='./secrets/service_account.json'
+        secrets_path='./secrets/service_account.json',
+        csvs_path='./csvs/'
 ):
     '''write data to bigquery table'''
     try:
@@ -31,7 +32,7 @@ def write_to_table(
         dataset_ref = client.dataset(dataset)
         table_ref = dataset_ref.table(table)
 
-        filename = './csvs/' + table + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        filename = csvs_path + table + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         df.to_csv(filename, index=False)
 
         time.sleep(3)
