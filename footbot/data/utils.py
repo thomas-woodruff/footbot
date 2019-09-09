@@ -16,10 +16,16 @@ def update_return_dict(d, k, v):
     return d
 
 
-def write_to_table(dataset, table, df, write_disposition='WRITE_APPEND'):
+def write_to_table(
+        dataset,
+        table,
+        df,
+        write_disposition='WRITE_APPEND',
+        secrets_path='./secrets/service_account.json'
+):
     '''write data to bigquery table'''
     try:
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './secrets/service_account.json'
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = secrets_path
         client = bigquery.Client()
 
         dataset_ref = client.dataset(dataset)
