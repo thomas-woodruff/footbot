@@ -12,7 +12,11 @@ def get_safe_web_name(web_name):
 
 def update_return_dict(d, k, v):
     '''update and return a dictionary'''
-    d[k] = v
+    if not (isinstance(k, list) and isinstance(v, list) and len(k) == len(v)):
+        raise Exception
+
+    for i in range(0, len(k)):
+        d[k[i]] = v[i]
     return d
 
 

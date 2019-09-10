@@ -58,10 +58,10 @@ def get_element_summary_data():
             element_history_arr.extend(element_data['history'])
 
             element_fixtures_arr.extend(
-                [utils.update_return_dict(k, 'element', i) for k in element_data['fixtures']])
+                [utils.update_return_dict(k, ['element'], [i]) for k in element_data['fixtures']])
 
             element_history_past_arr.extend(
-                [utils.update_return_dict(k, 'element', i) for k in element_data['history_past']])
+                [utils.update_return_dict(k, ['element'], [i]) for k in element_data['history_past']])
         except:
             continue
 
