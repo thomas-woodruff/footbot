@@ -3,6 +3,7 @@ import os
 from google.cloud import bigquery
 import datetime
 import time
+import requests
 
 
 def get_safe_web_name(web_name):
@@ -20,6 +21,26 @@ def update_return_dict(d, k, v):
     return d
 
 
+def get_dict_keys(d, k):
+    '''filter dictionary for relevant keys'''
+    if not (isinstance, k, list):
+        raise Exception
+    arr = []
+    for i in k:
+        arr.append((i, d[i]))
+
+    return dict(arr)
+
+
+def set_up_bigquery(
+        secrets_path='./secrets/service_account.json'
+):
+    '''set up bigquery client'''
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = secrets_path
+    return bigquery.Client()
+
+
+
 def write_to_table(
         dataset,
         table,
@@ -30,8 +51,7 @@ def write_to_table(
 ):
     '''write data to bigquery table'''
     try:
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = secrets_path
-        client = bigquery.Client()
+        client = set_up_bigquery(secrets_path)
 
         dataset_ref = client.dataset(dataset)
         table_ref = dataset_ref.table(table)
