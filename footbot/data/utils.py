@@ -3,7 +3,6 @@ import os
 from google.cloud import bigquery
 import datetime
 import time
-import requests
 
 
 def get_safe_web_name(web_name):
