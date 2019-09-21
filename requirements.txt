@@ -1,6 +1,6 @@
 aiofiles==0.4.0
 cachetools==3.1.1
-certifi==2019.6.16
+certifi==2019.9.11
 chardet==3.0.4
 cvxpy==1.0.25
 dill==0.3.0
@@ -8,9 +8,9 @@ ecos==2.0.7.post1
 future==0.17.1
 google-api-core==1.14.2
 google-auth==1.6.3
-google-cloud-bigquery==1.19.0
+google-cloud-bigquery==1.20.0
 google-cloud-core==1.0.3
-google-resumable-media==0.4.0
+google-resumable-media==0.4.1
 googleapis-common-protos==1.6.0
 h11==0.8.1
 h2==3.1.1
@@ -40,6 +40,6 @@ scs==2.1.1.post2
 six==1.12.0
 ujson==1.35
 Unidecode==1.1.1
-urllib3==1.25.3
+urllib3==1.25.5
 uvloop==0.13.0
 websockets==7.0
