@@ -107,23 +107,43 @@ def select_team(
 
 	# solve optimisation problem
 	squad_prob.solve(
-		# solver='GLPK_MI'
+		solver='GLPK_MI'
 	)
 
 	# get first team elements
 	first_team_selection = [int(round(j)) for j in first_team.value]
 	first_team_selection_indices = [i for i, j in enumerate(first_team_selection) if j == 1]
-	first_team_selection_elements = player_elements[first_team_selection_indices]
+	first_team_selection_elements = list(player_elements[first_team_selection_indices])
 	# get captain element
 	captain_selection = [int(round(j)) for j in captain.value]
 	captain_selection_indices = [i for i, j in enumerate(captain_selection) if j == 1]
-	captain_selection_elements = player_elements[captain_selection_indices]
+	captain_selection_elements = list(player_elements[captain_selection_indices])
 	# get bench elements
 	bench_selection = [int(round(j)) for j in bench.value]
 	bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
-	bench_selection_elements = player_elements[bench_selection_indices]
+	bench_selection_elements = list(player_elements[bench_selection_indices])
 
-	return first_team_selection_elements, captain_selection_elements, bench_selection_elements
+	if existing_squad_elements:
+		transfers = {
+			'transfers_in':
+				set(first_team_selection_elements + bench_selection_elements) - set(existing_squad_elements),
+			'transfers_out':
+				set(existing_squad_elements) - set(first_team_selection_elements + bench_selection_elements)
+		}
+	else:
+		transfers = {
+			'transfers_in':
+				set(),
+			'transfers_out':
+				set()
+		}
+
+	return (
+		first_team_selection_elements,
+		captain_selection_elements,
+		bench_selection_elements,
+		transfers
+	)
 
 
 def calculate_team_total_points(
