@@ -74,24 +74,17 @@ from footbot.api import server
 # if __name__ == '__main__':
 #     main()
 
-from sanic import Sanic
-from sanic.response import json, text
-import time
+from flask import Flask
 
-app = Sanic(__name__)
+app = Flask(__name__)
 
 
 @app.route('/')
-async def test(_):
-    return text('Greetings!')
-
-
-@app.get('/status')
-async def status(_):
-    return json({'OK': time.time(), 'status': 200})
+def home():
+    return 'Greetings!'
 
 
 if __name__ == '__main__':
     # This is used when running locally. Gunicorn is used to run the
     # application on Google App Engine. See entrypoint in app.yaml.
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    app.run(host='127.0.0.1', port=8022, debug=True)
