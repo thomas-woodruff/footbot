@@ -39,7 +39,6 @@ def set_up_bigquery(
     return bigquery.Client()
 
 
-
 def write_to_table(
         dataset,
         table,

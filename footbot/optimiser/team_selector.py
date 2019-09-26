@@ -1,5 +1,7 @@
 import cvxpy as cp
 import numpy as np
+from footbot.data import element_data
+import requests
 
 
 def select_team(
@@ -146,75 +148,87 @@ def select_team(
 	)
 
 
-def calculate_team_total_points(
-		df,
-		first_team_elements,
-		bench_elements,
-		event,
-		num_transfers=0,
-		carried_over_transfers=0
+def optimise_entry(
+		entry,
+		total_budget=1000,
+		bench_factor=0.1,
+		transfer_penalty=4,
+		transfer_limit=15
 ):
-	df = df.copy()
-	df = df[df['event'] == event]
-	df = df[df['element'].isin(list(first_team_elements) + list(bench_elements))]
-	df['is_first_team'] = 0
-	df.loc[df['element'].isin(list(first_team_elements)), 'is_first_team'] = 1
+	'''
+	optimise a given entry based on their picks
+	for the current event
+	'''
 
-	df['is_first_team'] = df['element'].apply(lambda x: 1 if x in first_team_elements else 0)
-	df_group = df.groupby('element')[['predicted_total_points', 'total_points', 'minutes']].sum()
-	df = df[['safe_web_name', 'element', 'value', 'element_type', 'is_first_team']].drop_duplicates()
-	df = df.join(df_group, on='element')
-	df.sort_values('predicted_total_points', ascending=False, inplace=True)
-	captain_selection = df.iloc[0]['element']
-	vice_selection = df.iloc[1]['element']
-	is_captain_missing = len(df[(df['element'] == captain_selection) & (df['minutes'] == 0)])
-	if is_captain_missing:
-		df['is_captain'] = df['element'].apply(lambda x: 1 if x == vice_selection else 0)
-	else:
-		df['is_captain'] = df['element'].apply(lambda x: 1 if x == captain_selection else 0)
+	df = element_data.get_element_df()[[
+		'element',
+		'element_type',
+		'now_cost',
+		'team',
+		'total_points',
+		'safe_web_name'
+	]]
+	df.columns = [
+		'element',
+		'element_type',
+		'value',
+		'team',
+		'total_points',
+		'safe_web_name'
+	]
+	players = df.to_dict('records')
 
-	missing_players = list(df[(df['minutes'] == 0) & (df['is_first_team'] == 1)]['element'])
-	present_bench_players = list(df[(df['minutes'] > 0) & (df['is_first_team'] == 0)]['element'])
-	num_missing_players = len(missing_players)
-	num_present_bench_players = len(present_bench_players)
+	bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
+	bootstrap_data = bootstrap_request.json()
+	current_event = [i for i in bootstrap_data['events'] if i['is_current']][0]['id']
 
-	if num_missing_players > 0:
-		num_keepers = 1
-		min_defenders = 3
-		min_midfielders = 2
-		min_strikers = 1
+	entry_request = requests.get(f'https://fantasy.premierleague.com/api/entry/{entry}/event/{current_event}/picks/')
+	entry_data = entry_request.json()
 
-		for i in range(0, min(3, num_missing_players, num_present_bench_players)):
-			substitute = df[df['is_first_team'] == 0].iloc[i]['element']
-			for missing_player in missing_players:
-				sub_loop_df = df.copy()
-				sub_loop_df.loc[sub_loop_df['element'] == substitute, 'is_first_team'] = 1
-				sub_loop_df.loc[sub_loop_df['element'] == missing_player, 'is_first_team'] = 0
-				num_team_keepers = len(
-					sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 1)])
-				num_team_defenders = len(
-					sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 2)])
-				num_team_midfielders = len(
-					sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 3)])
-				num_team_strikers = len(
-					sub_loop_df[(sub_loop_df['is_first_team'] == 1) & (sub_loop_df['element_type'] == 4)])
+	(
+		first_team_selection_elements,
+		captain_selection_elements,
+		bench_selection_elements,
+		transfers
+	) = select_team(
+		players,
+		optimise_key='total_points',
+		total_budget=total_budget,
+		bench_factor=bench_factor,
+		transfer_penalty=transfer_penalty,
+		transfer_limit=transfer_limit,
+		existing_squad_elements=[i['element'] for i in entry_data['picks']]
+	)
 
-				if (
-						(num_team_keepers == num_keepers)
-						& (num_team_defenders >= min_defenders)
-						& (num_team_midfielders >= min_midfielders)
-						& (num_team_strikers >= min_strikers)
-				):
-					df = sub_loop_df.copy()
-					missing_players = list(df[(df['minutes'] == 0) & (df['is_first_team'] == 1)]['element'])
-					num_missing_players = len(missing_players)
-					break
+	first_team = list(
+		df[
+			df['element'].isin(first_team_selection_elements)
+		].sort_values('element_type')['safe_web_name'].values)
 
-	transfer_cost = max(num_transfers - carried_over_transfers - 1, 0) * 4
-	team_total_points = \
-		sum(df[df['is_first_team'] == 1]['total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
+	captain = list(
+		df[
+			df['element'].isin(captain_selection_elements)
+		].sort_values('element_type')['safe_web_name'].values)
 
-	team_predicted_total_points = \
-		sum(df[df['is_first_team'] == 1]['predicted_total_points'] * (df[df['is_first_team'] == 1]['is_captain'] + 1))
+	bench = list(
+		df[
+			df['element'].isin(bench_selection_elements)
+		].sort_values('element_type')['safe_web_name'].values)
 
-	return team_total_points - transfer_cost, team_predicted_total_points, df
+	transfers_in = list(
+		df[
+			df['element'].isin(transfers['transfers_in'])
+		].sort_values('element_type')['safe_web_name'].values)
+
+	transfers_out = list(
+		df[
+			df['element'].isin(transfers['transfers_out'])
+		].sort_values('element_type')['safe_web_name'].values)
+
+	return {
+		'first_team': first_team,
+		'captain': captain,
+		'bench': bench,
+		'transfers_in': transfers_in,
+		'transfers_out': transfers_out
+	}
