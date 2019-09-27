@@ -3,6 +3,7 @@ from footbot.data import element_data, entry_data, utils
 from footbot.optimiser import team_selector
 from flask import Flask, request
 import multiprocessing as mp
+import os
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -60,11 +61,18 @@ def home_route():
 
 @app.route('/update_data')
 def update_data_route():
-    element_data_process = mp.Process(target=element_data_job)
-    entry_data_process = mp.Process(target=entry_data_job)
-
-    element_data_process.start()
-    entry_data_process.start()
+    # element_data_process = mp.Process(target=element_data_job)
+    # entry_data_process = mp.Process(target=entry_data_job)
+    #
+    # element_data_process.start()
+    # entry_data_process.start()
+    print(cwd = os.getcwd())
+    print('getting element data')
+    element_df = element_data.get_element_df()
+    print('writing element data')
+    utils.write_to_table('fpl',
+                         'element_data_1920',
+                         element_df)
 
     return 'Running hot, baby'
 
