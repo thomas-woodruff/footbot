@@ -1,4 +1,4 @@
 cron:
 - description: "Update element and entry data on BigQuery"
   url: /update_data
-  schedule: every day 13:00
+  schedule: every day 00:00
