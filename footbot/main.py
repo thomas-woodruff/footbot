@@ -66,7 +66,7 @@ def update_data_route():
     #
     # element_data_process.start()
     # entry_data_process.start()
-    print(cwd = os.getcwd())
+    print(os.getcwd())
     print('getting element data')
     element_df = element_data.get_element_df()
     print('writing element data')
