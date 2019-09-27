@@ -1,10 +1,9 @@
 import logging
-import schedule
-import time
-import multiprocessing as mp
 from footbot.data import element_data, entry_data, utils
 from footbot.optimiser import team_selector
 from flask import Flask, request
+import multiprocessing as mp
+
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -51,24 +50,6 @@ def entry_data_job():
                          write_disposition='WRITE_TRUNCATE')
 
 
-def scheduled_data_jobs():
-    schedule.every().day.at('09:30').do(element_data_job)
-    schedule.every().day.at('09:35').do(entry_data_job)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
-
-def schedule_data_updates():
-    logger = logging.getLogger(__name__)
-
-    p = mp.Process(target=scheduled_data_jobs)
-
-    logger.info('starting scheduler')
-    p.start()
-
-
 app = Flask(__name__)
 
 
@@ -77,18 +58,23 @@ def home_route():
     return 'Greetings!'
 
 
-@app.route('/schedule_data_updates')
-def schedule_data_updates_route():
-    schedule_data_updates()
-    return 'Scheduled, baby'
+@app.route('/update_data')
+def update_data_route():
+    element_data_process = mp.Process(target=element_data_job)
+    entry_data_process = mp.Process(target=entry_data_job)
+
+    element_data_process.start()
+    entry_data_process.start()
+
+    return 'Running hot, baby'
 
 
 @app.route('/optimise_team/<entry>')
 def optimise_team_route(entry):
-    total_budget = request.args.get('total_budget', 1000)
-    bench_factor = request.args.get('bench_factor', 0.1)
-    transfer_penalty = request.args.get('transfer_penalty', 4)
-    transfer_limit = request.args.get('transfer_limit', 15)
+    total_budget = int(request.args.get('total_budget', 1000))
+    bench_factor = float(request.args.get('bench_factor', 0.1))
+    transfer_penalty = float(request.args.get('transfer_penalty', 4))
+    transfer_limit = int(request.args.get('transfer_limit', 15))
 
     return team_selector.optimise_entry(
         entry,
