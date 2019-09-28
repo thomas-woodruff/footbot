@@ -162,7 +162,7 @@ def optimise_entry(
 
 	df = element_data.get_element_df()
 	df['average_points'] = df['total_points'] / df['current_event']
-	df[[
+	df = df[[
 		'element',
 		'element_type',
 		'now_cost',
