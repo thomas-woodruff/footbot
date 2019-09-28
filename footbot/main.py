@@ -18,6 +18,7 @@ def element_data_job():
     utils.write_to_table('fpl',
                          'element_data_1920',
                          element_df)
+    logger.info('done writing element data')
 
     logger.info('getting element gameweeks and fixtures')
     element_history_df, element_fixtures_df = element_data.get_element_summary_dfs()
@@ -26,11 +27,13 @@ def element_data_job():
                          'element_gameweeks_1920',
                          element_history_df,
                          write_disposition='WRITE_TRUNCATE')
+    logger.info('done writing element gameweeks')
     logger.info('writing element fixtures')
     utils.write_to_table('fpl',
                          'element_future_fixtures_1920',
                          element_fixtures_df,
                          write_disposition='WRITE_TRUNCATE')
+    logger.info('done writing element fixtures')
 
 
 def entry_data_job():
@@ -43,11 +46,13 @@ def entry_data_job():
                          'top_entries_picks_1920',
                          picks_df,
                          write_disposition='WRITE_TRUNCATE')
+    logger.info('done writing entry picks')
     logger.info('writing entry chips')
     utils.write_to_table('fpl',
                          'top_entries_chips_1920',
                          chips_df,
                          write_disposition='WRITE_TRUNCATE')
+    logger.info('done writing entry chips')
 
 
 app = Flask(__name__)
