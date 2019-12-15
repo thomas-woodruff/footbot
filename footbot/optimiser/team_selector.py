@@ -160,12 +160,14 @@ def optimise_entry(
 	for the current event
 	'''
 
-	df = element_data.get_element_df()[[
+	df = element_data.get_element_df()
+	df['average_points'] = df['total_points'] / df['current_event']
+	df = df[[
 		'element',
 		'element_type',
 		'now_cost',
 		'team',
-		'total_points',
+		'average_points',
 		'safe_web_name'
 	]]
 	df.columns = [
@@ -173,7 +175,7 @@ def optimise_entry(
 		'element_type',
 		'value',
 		'team',
-		'total_points',
+		'average_points',
 		'safe_web_name'
 	]
 	players = df.to_dict('records')
@@ -192,7 +194,7 @@ def optimise_entry(
 		transfers
 	) = select_team(
 		players,
-		optimise_key='total_points',
+		optimise_key='average_points',
 		total_budget=total_budget,
 		bench_factor=bench_factor,
 		transfer_penalty=transfer_penalty,

@@ -39,6 +39,18 @@ def set_up_bigquery(
     return bigquery.Client()
 
 
+def run_query(
+        sql,
+        secrets_path='./secrets/service_account.json'
+):
+    '''run bigquery sql and return dataframe'''
+    try:
+        client = set_up_bigquery(secrets_path)
+        return client.query(sql).to_dataframe()
+    except Exception as e:
+        print(e)
+
+
 def write_to_table(
         dataset,
         table,
