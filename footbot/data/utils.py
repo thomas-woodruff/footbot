@@ -3,6 +3,7 @@ import os
 from google.cloud import bigquery
 import datetime
 import time
+import requests
 
 
 def get_safe_web_name(web_name):
@@ -84,3 +85,13 @@ def write_to_table(
 
     except Exception as e:
         print(e)
+
+
+def check_next_event_deadlinetime(window_hours=24):
+    bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
+    events = bootstrap_request.json()['events']
+
+    deadlinetime_str = [i for i in events if i['is_next']][0]['deadline_time']
+    deadlinetime = datetime.datetime.strptime(deadlinetime_str, '%Y-%m-%dT%H:%M:%SZ')
+
+    return deadlinetime < datetime.datetime.now() + datetime.timedelta(hours=24)

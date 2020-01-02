@@ -65,6 +65,9 @@ def home_route():
 
 @app.route('/update_data')
 def update_data_route():
+    if not utils.check_next_event_deadlinetime():
+        return 'Next deadline more than 24 hours away'
+
     element_data_process = mp.Process(target=element_data_job)
     entry_data_process = mp.Process(target=entry_data_job)
 
