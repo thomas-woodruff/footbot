@@ -36,6 +36,28 @@ def get_element_df():
         'value_season', 'web_name', 'yellow_cards'
     ]]
 
+    # sanitise data types
+    for i in [
+        'creativity',
+        'ep_next',
+        'ep_this',
+        'form',
+        'ict_index',
+        'influence',
+        'points_per_game',
+        'selected_by_percent',
+        'threat',
+        'value_form',
+        'value_season'
+    ]:
+        element_df[i] = element_df[i].astype('float')
+
+    for i in [
+        'datetime',
+        'news_added'
+    ]:
+        element_df[i] = element_df[i].astype('datetime64[ms]')
+
     return element_df
 
 

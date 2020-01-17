@@ -57,8 +57,7 @@ def write_to_table(
         table,
         df,
         write_disposition='WRITE_APPEND',
-        secrets_path='./secrets/service_account.json',
-        csvs_path='./csvs/'
+        secrets_path='./secrets/service_account.json'
 ):
     '''write data to bigquery table'''
     try:
@@ -67,27 +66,19 @@ def write_to_table(
         dataset_ref = client.dataset(dataset)
         table_ref = dataset_ref.table(table)
 
-        filename = csvs_path + table + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        df.to_csv(filename, index=False)
+        job_config = bigquery.LoadJobConfig()
+        job_config.autodetect = True
+        job_config.write_disposition = write_disposition
 
-        time.sleep(3)
-
-        with open(filename, 'rb') as source_file:
-            job_config = bigquery.LoadJobConfig()
-            job_config.skip_leading_rows = 1
-            job_config.autodetect = True
-            job_config.write_disposition = write_disposition
-            client.load_table_from_file(
-                source_file, table_ref, job_config=job_config)
-
-        time.sleep(3)
-        os.remove(filename)
+        client.load_table_from_dataframe(
+            df, table_ref, job_config=job_config
+        )
 
     except Exception as e:
         print(e)
 
 
-def check_next_event_deadlinetime(window_hours=24):
+def check_next_event_deadlinetime():
     bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
     events = bootstrap_request.json()['events']
 
