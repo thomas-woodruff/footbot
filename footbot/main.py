@@ -1,58 +1,12 @@
 import logging
-from footbot.data import element_data, entry_data, utils
+from footbot.data import utils, element_data, entry_data
 from footbot.optimiser import team_selector
+# from footbot.predictor import train_predict
 from flask import Flask, request
-import multiprocessing as mp
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-
-def element_data_job():
-    logger = logging.getLogger(__name__)
-
-    logger.info('getting element data')
-    element_df = element_data.get_element_df()
-    logger.info('writing element data')
-    utils.write_to_table('fpl',
-                         'element_data_1920',
-                         element_df)
-    logger.info('done writing element data')
-
-    logger.info('getting element gameweeks and fixtures')
-    element_history_df, element_fixtures_df = element_data.get_element_summary_dfs()
-    logger.info('writing element gameweeks')
-    utils.write_to_table('fpl',
-                         'element_gameweeks_1920',
-                         element_history_df,
-                         write_disposition='WRITE_TRUNCATE')
-    logger.info('done writing element gameweeks')
-    logger.info('writing element fixtures')
-    utils.write_to_table('fpl',
-                         'element_future_fixtures_1920',
-                         element_fixtures_df,
-                         write_disposition='WRITE_TRUNCATE')
-    logger.info('done writing element fixtures')
-
-
-def entry_data_job():
-    logger = logging.getLogger(__name__)
-
-    logger.info('getting entry data')
-    picks_df, chips_df = entry_data.get_top_entries_dfs()
-    logger.info('writing entry picks')
-    utils.write_to_table('fpl',
-                         'top_entries_picks_1920',
-                         picks_df,
-                         write_disposition='WRITE_TRUNCATE')
-    logger.info('done writing entry picks')
-    logger.info('writing entry chips')
-    utils.write_to_table('fpl',
-                         'top_entries_chips_1920',
-                         chips_df,
-                         write_disposition='WRITE_TRUNCATE')
-    logger.info('done writing entry chips')
 
 
 app = Flask(__name__)
@@ -63,18 +17,65 @@ def home_route():
     return 'Greetings!'
 
 
-@app.route('/update_data')
-def update_data_route():
-    if not utils.check_next_event_deadlinetime():
-        return 'Next deadline more than 24 hours away'
+@app.route('/update_element_data')
+def update_element_data_route():
+    logger = logging.getLogger(__name__)
 
-    element_data_process = mp.Process(target=element_data_job)
-    entry_data_process = mp.Process(target=entry_data_job)
+    logger.info('getting element data')
+    element_df = element_data.get_element_df()
+    logger.info('writing element data')
+    utils.write_to_table('fpl',
+                         'element_data_1920',
+                         element_df)
+    logger.info('done writing element data')
 
-    element_data_process.start()
-    entry_data_process.start()
+    return 'Updated element data, baby'
 
-    return 'Updating data, baby'
+
+@app.route('/update_element_history_fixtures')
+def update_element_history_fixtures_route():
+    logger = logging.getLogger(__name__)
+
+    logger.info('getting element gameweek history and fixtures')
+    element_history_df, element_fixtures_df = element_data.get_element_summary_dfs()
+    logger.info('writing element gameweek history')
+    utils.write_to_table('fpl',
+                         'element_gameweeks_1920',
+                         element_history_df,
+                         write_disposition='WRITE_TRUNCATE')
+    logger.info('done writing element gameweek history')
+    logger.info('writing element fixtures')
+    utils.write_to_table('fpl',
+                         'element_future_fixtures_1920',
+                         element_fixtures_df,
+                         write_disposition='WRITE_TRUNCATE')
+    logger.info('done writing element fixtures')
+
+    return 'Updated element gameweek history and fixtures, baby'
+
+
+# this takes at least a few minutes to run at the moment
+#
+# @app.route('/update_entry_picks_chips')
+# def update_entry_picks_chips():
+#     logger = logging.getLogger(__name__)
+#
+#     logger.info('getting entry data')
+#     picks_df, chips_df = entry_data.get_top_entries_dfs()
+#     logger.info('writing entry picks')
+#     utils.write_to_table('fpl',
+#                          'top_entries_picks_1920',
+#                          picks_df,
+#                          write_disposition='WRITE_TRUNCATE')
+#     logger.info('done writing entry picks')
+#     logger.info('writing entry chips')
+#     utils.write_to_table('fpl',
+#                          'top_entries_chips_1920',
+#                          chips_df,
+#                          write_disposition='WRITE_TRUNCATE')
+#     logger.info('done writing entry chips')
+#
+#     return 'Updated entry picks and chips, baby'
 
 
 @app.route('/optimise_team/<entry>')

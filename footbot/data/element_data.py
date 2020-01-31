@@ -84,7 +84,8 @@ def get_element_summary_data():
 
             element_history_past_arr.extend(
                 [utils.update_return_dict(k, ['element'], [i]) for k in element_data['history_past']])
-        except:
+        except Exception as e:
+            print(e)
             continue
 
     return element_history_arr, element_fixtures_arr, element_history_past_arr
