@@ -91,7 +91,7 @@ def get_element_summary_data():
     element_fixtures_arr = []
     element_history_past_arr = []
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=25) as executor:
         results = executor.map(_get_element_json, range(1, max_element + 1))
 
     for i, element_data in results:
