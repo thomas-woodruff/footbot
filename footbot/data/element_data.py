@@ -1,13 +1,33 @@
+from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import requests
 import datetime
 from footbot.data import utils
 
+# from dogpile.cache import make_region
+#
+# region = make_region().configure(
+#     'dogpile.cache.dbm',
+#     expiration_time = 3600,
+#     arguments={
+#         "filename": "cache.dbm"
+#     }
+# )
+
+
+# @region.cache_on_arguments()
+def _get_bootstrap():
+    return requests.get('https://fantasy.premierleague.com/api/bootstrap-static/').json()
+
+
+# @region.cache_on_arguments()
+def _get_element_json(id):
+    return id, requests.get(f'https://fantasy.premierleague.com/api/element-summary/{id}/').json()
+
 
 def get_element_df():
     '''get contemporaneous element data'''
-    bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
-    bootstrap_data = bootstrap_request.json()
+    bootstrap_data = _get_bootstrap()
 
     current_event = [i for i in bootstrap_data['events'] if i['is_current']][0]['id']
 
@@ -63,8 +83,7 @@ def get_element_df():
 
 def get_element_summary_data():
     '''Loop through element summaries'''
-    bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
-    bootstrap_data = bootstrap_request.json()
+    bootstrap_data = _get_bootstrap()
 
     max_element = max([i['id'] for i in bootstrap_data['elements']])
 
@@ -72,10 +91,11 @@ def get_element_summary_data():
     element_fixtures_arr = []
     element_history_past_arr = []
 
-    for i in range(1, max_element + 1):
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        results = executor.map(_get_element_json, range(1, max_element + 1))
+
+    for i, element_data in results:
         try:
-            element_request = requests.get(f'https://fantasy.premierleague.com/api/element-summary/{i}/')
-            element_data = element_request.json()
 
             element_history_arr.extend(element_data['history'])
 
@@ -94,15 +114,33 @@ def get_element_summary_data():
 def get_element_summary_dfs():
     '''get element gameweek and future fixture data'''
     element_history_arr, element_fixtures_arr, _ = get_element_summary_data()
-
     element_history_df = pd.DataFrame(element_history_arr)
     element_history_df.columns = ['event' if i == 'round' else i for i in element_history_df.columns]
+
+    # sanitise data types
+    for i in [
+        'creativity',
+        'ict_index',
+        'influence',
+        'threat',
+    ]:
+        element_history_df[i] = element_history_df[i].astype('float')
+
+    for i in [
+        'kickoff_time'
+    ]:
+        element_history_df[i] = element_history_df[i].astype('datetime64[ms]')
 
     element_fixtures_df = pd.DataFrame(element_fixtures_arr)
     element_fixtures_df = element_fixtures_df[
         ['element']
         + list(element_fixtures_df.columns)[:-1]
         ]
+
+    for i in [
+        'kickoff_time'
+    ]:
+        element_fixtures_df[i] = element_fixtures_df[i].astype('datetime64[ms]')
 
     return element_history_df, element_fixtures_df
 

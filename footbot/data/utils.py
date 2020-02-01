@@ -4,6 +4,7 @@ from google.cloud import bigquery
 import datetime
 import time
 import requests
+from six import StringIO
 
 
 def get_safe_web_name(web_name):
@@ -61,6 +62,7 @@ def write_to_table(
 ):
     '''write data to bigquery table'''
     try:
+        buf = StringIO()
         client = set_up_bigquery(secrets_path)
 
         dataset_ref = client.dataset(dataset)
@@ -68,11 +70,15 @@ def write_to_table(
 
         job_config = bigquery.LoadJobConfig()
         job_config.autodetect = True
+        job_config.skip_leading_rows = 1
         job_config.write_disposition = write_disposition
 
-        client.load_table_from_dataframe(
-            df, table_ref, job_config=job_config
-        )
+        df.to_csv(buf, index=False)
+
+        buf.seek(0)
+
+        client.load_table_from_file(
+            buf, table_ref, job_config=job_config)
 
     except Exception as e:
         print(e)

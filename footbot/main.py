@@ -3,6 +3,7 @@ from footbot.data import utils, element_data, entry_data
 from footbot.optimiser import team_selector
 # from footbot.predictor import train_predict
 from flask import Flask, request
+from os.path import join, dirname
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -10,6 +11,9 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 
 
 app = Flask(__name__)
+
+
+SECRETS_FILE = join(dirname(dirname(__file__)), 'secrets', 'service_account.json')
 
 
 @app.route('/')
@@ -42,7 +46,8 @@ def update_element_history_fixtures_route():
     utils.write_to_table('fpl',
                          'element_gameweeks_1920',
                          element_history_df,
-                         write_disposition='WRITE_TRUNCATE')
+                         write_disposition='WRITE_TRUNCATE'
+                         )
     logger.info('done writing element gameweek history')
     logger.info('writing element fixtures')
     utils.write_to_table('fpl',
