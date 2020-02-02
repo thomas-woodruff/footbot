@@ -1,6 +1,7 @@
 import unidecode as u
 import os
 from google.cloud import bigquery, tasks_v2
+from google.protobuf import timestamp_pb2
 import datetime
 import requests
 from six import StringIO
@@ -95,10 +96,18 @@ def create_cloud_task(
         task,
         queue,
         project='footbot-001',
-        location='europe-west2'
+        location='europe-west2',
+        delay=None
 ):
     client = set_up_tasks()
     parent = client.queue_path(project, location, queue)
+
+    if delay:
+        d = datetime.datetime.utcnow() + datetime.timedelta(seconds=delay)
+        timestamp = timestamp_pb2.Timestamp()
+        timestamp.FromDatetime(d)
+        task['schedule_time'] = timestamp
+
     return client.create_task(parent, task)
 
 

@@ -25,7 +25,8 @@ def create_update_element_history_fixtures_task(element):
 
     response = utils.create_cloud_task(
         task,
-        'update-element-history-fixtures')
+        'update-element-history-fixtures',
+        delay=60)
 
     return response
 
@@ -43,7 +44,8 @@ def create_update_entry_picks_chips_task(entry):
 
     response = utils.create_cloud_task(
         task,
-        'update-entry-picks-chips')
+        'update-entry-picks-chips',
+        delay=60)
 
     return response
 
