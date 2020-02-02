@@ -4,7 +4,7 @@ cron:
   schedule: every day 09:00
 - description: "Update element gameweek history and fixtures on BigQuery"
   url: /update_element_history_fixtures
-  schedule: every day 09:00
+  schedule: every day 09:05
 - description: "Update top entries picks and chips on BigQuery"
   url: /update_entry_picks_chips
-  schedule: every day 09:00
+  schedule: every day 09:15
