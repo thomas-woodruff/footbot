@@ -2,6 +2,7 @@ import logging
 from footbot.data import utils, element_data, entry_data
 from footbot.optimiser import team_selector
 from flask import Flask, request
+from concurrent.futures import ThreadPoolExecutor
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -9,6 +10,51 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 
 
 app = Flask(__name__)
+
+
+def create_update_element_history_fixtures_task(element):
+    logger = logging.getLogger(__name__)
+    logger.info(f'doing element {element}')
+
+    task = {
+        'app_engine_http_request': {
+            'http_method': 'POST',
+            'relative_uri': f'/update_element_history_fixtures/{element}'
+        }
+    }
+
+    response = utils.create_cloud_task(
+        task,
+        'update-element-history-fixtures')
+
+    return response
+
+
+def update_element_history_fixtures_worker(element):
+    logger = logging.getLogger(__name__)
+
+    logger.info('getting element gameweek history and fixtures')
+    element_history_df, element_fixtures_df = element_data.get_element_history_fixture_dfs(element)
+
+    logger.info('deleting element gameweek history')
+    utils.run_query(
+        f'DELETE FROM `footbot-001.fpl.element_gameweeks_1920` WHERE element = {element}'
+    )
+    logger.info('writing element gameweek history')
+    utils.write_to_table('fpl',
+                         'element_gameweeks_1920',
+                         element_history_df)
+    logger.info('done writing element gameweek history')
+
+    logger.info('deleting element fixtures')
+    utils.run_query(
+        f'DELETE FROM `footbot-001.fpl.element_future_fixtures_1920` WHERE element = {element}'
+    )
+    logger.info('writing element fixtures')
+    utils.write_to_table('fpl',
+                         'element_future_fixtures_1920',
+                         element_fixtures_df)
+    logger.info('done writing element fixtures')
 
 
 @app.route('/')
@@ -35,27 +81,30 @@ def update_element_data_route():
 def update_element_history_fixtures_route():
     logger = logging.getLogger(__name__)
 
-    logger.info('getting element gameweek history and fixtures')
-    element_history_df, element_fixtures_df = element_data.get_element_summary_dfs()
-    logger.info('writing element gameweek history')
-    utils.write_to_table('fpl',
-                         'element_gameweeks_1920',
-                         element_history_df,
-                         write_disposition='WRITE_TRUNCATE'
-                         )
-    logger.info('done writing element gameweek history')
-    logger.info('writing element fixtures')
-    utils.write_to_table('fpl',
-                         'element_future_fixtures_1920',
-                         element_fixtures_df,
-                         write_disposition='WRITE_TRUNCATE')
-    logger.info('done writing element fixtures')
+    logger.info('purging queue')
+    utils.purge_cloud_queue('update-element-history-fixtures')
 
-    return 'Updated element gameweek history and fixtures, baby'
+    elements = element_data.get_elements()
+
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        executor.map(create_update_element_history_fixtures_task, elements[:10])
+
+    return 'elements queued'
+
+
+@app.route('/update_element_history_fixtures/<element>', methods=['POST'])
+def update_element_history_fixtures_element_route(element):
+    logger = logging.getLogger(__name__)
+    try:
+        update_element_history_fixtures_worker(element)
+        return 'lovely stuff'
+    except Exception as e:
+        logger.error(f'Unable to update element {element} with exception {e}')
+        return 'bad news!'
+
 
 
 # this takes at least a few minutes to run at the moment
-#
 # @app.route('/update_entry_picks_chips')
 # def update_entry_picks_chips():
 #     logger = logging.getLogger(__name__)

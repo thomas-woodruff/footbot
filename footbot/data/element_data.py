@@ -1,33 +1,16 @@
-from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import requests
 import datetime
 from footbot.data import utils
 
-# from dogpile.cache import make_region
-#
-# region = make_region().configure(
-#     'dogpile.cache.dbm',
-#     expiration_time = 3600,
-#     arguments={
-#         "filename": "cache.dbm"
-#     }
-# )
 
-
-# @region.cache_on_arguments()
-def _get_bootstrap():
+def get_bootstrap():
     return requests.get('https://fantasy.premierleague.com/api/bootstrap-static/').json()
-
-
-# @region.cache_on_arguments()
-def _get_element_json(id):
-    return id, requests.get(f'https://fantasy.premierleague.com/api/element-summary/{id}/').json()
 
 
 def get_element_df():
     '''get contemporaneous element data'''
-    bootstrap_data = _get_bootstrap()
+    bootstrap_data = get_bootstrap()
 
     current_event = [i for i in bootstrap_data['events'] if i['is_current']][0]['id']
 
@@ -81,40 +64,15 @@ def get_element_df():
     return element_df
 
 
-def get_element_summary_data():
-    '''Loop through element summaries'''
-    bootstrap_data = _get_bootstrap()
+def get_elements():
+    '''get list of all elements'''
 
-    max_element = max([i['id'] for i in bootstrap_data['elements']])
+    bootstrap_data = get_bootstrap()
 
-    element_history_arr = []
-    element_fixtures_arr = []
-    element_history_past_arr = []
-
-    with ThreadPoolExecutor(max_workers=25) as executor:
-        results = executor.map(_get_element_json, range(1, max_element + 1))
-
-    for i, element_data in results:
-        try:
-
-            element_history_arr.extend(element_data['history'])
-
-            element_fixtures_arr.extend(
-                [utils.update_return_dict(k, ['element'], [i]) for k in element_data['fixtures']])
-
-            element_history_past_arr.extend(
-                [utils.update_return_dict(k, ['element'], [i]) for k in element_data['history_past']])
-        except Exception as e:
-            print(e)
-            continue
-
-    return element_history_arr, element_fixtures_arr, element_history_past_arr
+    return [i['id'] for i in bootstrap_data['elements']]
 
 
-def get_element_summary_dfs():
-    '''get element gameweek and future fixture data'''
-    element_history_arr, element_fixtures_arr, _ = get_element_summary_data()
-    element_history_df = pd.DataFrame(element_history_arr)
+def sanitise_element_history_df(element_history_df):
     element_history_df.columns = ['event' if i == 'round' else i for i in element_history_df.columns]
 
     # sanitise data types
@@ -131,7 +89,10 @@ def get_element_summary_dfs():
     ]:
         element_history_df[i] = element_history_df[i].astype('datetime64[ms]')
 
-    element_fixtures_df = pd.DataFrame(element_fixtures_arr)
+    return element_history_df
+
+
+def sanitise_element_fixtures_df(element_fixtures_df):
     element_fixtures_df = element_fixtures_df[
         ['element']
         + list(element_fixtures_df.columns)[:-1]
@@ -142,17 +103,15 @@ def get_element_summary_dfs():
     ]:
         element_fixtures_df[i] = element_fixtures_df[i].astype('datetime64[ms]')
 
+    return element_fixtures_df
+
+
+def get_element_history_fixture_dfs(element):
+    element_data = requests.get(f'https://fantasy.premierleague.com/api/element-summary/{element}/').json()
+    element_history = element_data['history']
+    element_fixtures = [utils.update_return_dict(k, ['element'], [element]) for k in element_data['fixtures']]
+
+    element_history_df = sanitise_element_history_df(pd.DataFrame(element_history))
+    element_fixtures_df = sanitise_element_fixtures_df(pd.DataFrame(element_fixtures))
+
     return element_history_df, element_fixtures_df
-
-
-def get_element_past_history_df():
-    '''get element past season data'''
-    _, _, element_history_past_arr = get_element_summary_data()
-
-    element_history_past_df = pd.DataFrame(element_history_past_arr)
-    element_history_past_df = element_history_past_df[
-        ['element']
-        + list(element_history_past_df.columns)[:-1]
-        ]
-
-    return element_history_past_df

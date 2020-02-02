@@ -1,6 +1,6 @@
 import unidecode as u
 import os
-from google.cloud import bigquery
+from google.cloud import bigquery, tasks_v2
 import datetime
 import requests
 from six import StringIO
@@ -30,6 +30,14 @@ def get_dict_keys(d, k):
         arr.append((i, d[i]))
 
     return dict(arr)
+
+
+def set_up_tasks(
+        secrets_path='./secrets/service_account.json'
+):
+    '''set up tasks client'''
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = secrets_path
+    return tasks_v2.CloudTasksClient()
 
 
 def set_up_bigquery(
@@ -81,6 +89,27 @@ def write_to_table(
 
     except Exception as e:
         print(e)
+
+
+def create_cloud_task(
+        task,
+        queue,
+        project='footbot-001',
+        location='europe-west2'
+):
+    client = set_up_tasks()
+    parent = client.queue_path(project, location, queue)
+    return client.create_task(parent, task)
+
+
+def purge_cloud_queue(
+        queue,
+        project='footbot-001',
+        location='europe-west2'
+):
+    client = set_up_tasks()
+    parent = client.queue_path(project, location, queue)
+    return client.purge_queue(parent)
 
 
 def check_next_event_deadlinetime():
