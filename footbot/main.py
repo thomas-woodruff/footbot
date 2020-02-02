@@ -164,7 +164,7 @@ def update_entry_picks_chips_route():
 
 
 @app.route('/update_entry_picks_chips/<entry>', methods=['POST'])
-def update_entry_picks_chips_route(entry):
+def update_entry_picks_chips_entry_route(entry):
     logger = logging.getLogger(__name__)
     try:
         update_entry_picks_chips_worker(entry)
