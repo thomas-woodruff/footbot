@@ -2,7 +2,6 @@ import unidecode as u
 import os
 from google.cloud import bigquery
 import datetime
-import time
 import requests
 from six import StringIO
 
