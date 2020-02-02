@@ -7,14 +7,17 @@ cvxpy==1.0.25
 dill==0.3.1.1
 ecos==2.0.7.post1
 Flask==1.1.1
--e git+git@github.com:thomas-woodruff/footbot.git@3892a381279407467c7c944389a65c2f3383b08f#egg=footbot
+footbot==0.1.0
 future==0.18.2
 google-api-core==1.16.0
 google-auth==1.11.0
 google-cloud-bigquery==1.23.1
 google-cloud-core==1.3.0
+google-cloud-tasks==1.3.0
 google-resumable-media==0.5.0
 googleapis-common-protos==1.51.0
+grpc-google-iam-v1==0.12.3
+grpcio==1.26.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.11.1
