@@ -31,6 +31,21 @@ def create_update_element_history_fixtures_task(element):
     return response
 
 
+def create_update_element_history_fixtures_dispatch_task():
+    task = {
+        'app_engine_http_request': {
+            'http_method': 'POST',
+            'relative_uri': f'/update_element_history_fixtures_dispatch'
+        }
+    }
+
+    response = utils.create_cloud_task(
+        task,
+        'dispatch')
+
+    return response
+
+
 def create_update_entry_picks_chips_task(entry):
     logger = logging.getLogger(__name__)
     logger.info(f'doing entry {entry}')
@@ -46,6 +61,21 @@ def create_update_entry_picks_chips_task(entry):
         task,
         'update-entry-picks-chips',
         delay=60)
+
+    return response
+
+
+def create_update_entry_picks_chips_dispatch_task():
+    task = {
+        'app_engine_http_request': {
+            'http_method': 'POST',
+            'relative_uri': f'/update_entry_picks_chips_dispatch'
+        }
+    }
+
+    response = utils.create_cloud_task(
+        task,
+        'dispatch')
 
     return response
 
@@ -128,6 +158,17 @@ def update_element_data_route():
 def update_element_history_fixtures_route():
     logger = logging.getLogger(__name__)
 
+    logger.info('dispatching tasks')
+
+    create_update_element_history_fixtures_dispatch_task()
+
+    return 'elements queued'
+
+
+@app.route('/update_element_history_fixtures_dispatch')
+def update_element_history_fixtures_dispatch_route():
+    logger = logging.getLogger(__name__)
+
     logger.info('purging queue')
     utils.purge_cloud_queue('update-element-history-fixtures')
 
@@ -152,6 +193,17 @@ def update_element_history_fixtures_element_route(element):
 
 @app.route('/update_entry_picks_chips')
 def update_entry_picks_chips_route():
+    logger = logging.getLogger(__name__)
+
+    logger.info('dispatching tasks')
+
+    create_update_entry_picks_chips_dispatch_task()
+
+    return 'entries queued'
+
+
+@app.route('/update_entry_picks_chips_dispatch')
+def update_entry_picks_chips_dispatch_route():
     logger = logging.getLogger(__name__)
 
     logger.info('purging queue')
