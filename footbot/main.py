@@ -165,7 +165,7 @@ def update_element_history_fixtures_route():
     return 'elements queued'
 
 
-@app.route('/update_element_history_fixtures_dispatch')
+@app.route('/update_element_history_fixtures_dispatch', methods=['POST'])
 def update_element_history_fixtures_dispatch_route():
     logger = logging.getLogger(__name__)
 
@@ -202,7 +202,7 @@ def update_entry_picks_chips_route():
     return 'entries queued'
 
 
-@app.route('/update_entry_picks_chips_dispatch')
+@app.route('/update_entry_picks_chips_dispatch', methods=['POST'])
 def update_entry_picks_chips_dispatch_route():
     logger = logging.getLogger(__name__)
 
