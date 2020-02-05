@@ -2,7 +2,7 @@ import logging
 from footbot.data import utils, element_data, entry_data
 from footbot.optimiser import team_selector
 from flask import Flask, request
-from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -25,25 +25,10 @@ def create_update_element_history_fixtures_task(element):
 
     response = utils.create_cloud_task(
         task,
-        'update-element-history-fixtures',
-        delay=60)
+        'update-element-history-fixtures')
 
     return response
 
-
-def create_update_element_history_fixtures_dispatch_task():
-    task = {
-        'app_engine_http_request': {
-            'http_method': 'POST',
-            'relative_uri': f'/update_element_history_fixtures_dispatch'
-        }
-    }
-
-    response = utils.create_cloud_task(
-        task,
-        'dispatch')
-
-    return response
 
 
 def create_update_entry_picks_chips_task(entry):
@@ -59,23 +44,7 @@ def create_update_entry_picks_chips_task(entry):
 
     response = utils.create_cloud_task(
         task,
-        'update-entry-picks-chips',
-        delay=60)
-
-    return response
-
-
-def create_update_entry_picks_chips_dispatch_task():
-    task = {
-        'app_engine_http_request': {
-            'http_method': 'POST',
-            'relative_uri': f'/update_entry_picks_chips_dispatch'
-        }
-    }
-
-    response = utils.create_cloud_task(
-        task,
-        'dispatch')
+        'update-entry-picks-chips')
 
     return response
 
@@ -158,24 +127,13 @@ def update_element_data_route():
 def update_element_history_fixtures_route():
     logger = logging.getLogger(__name__)
 
-    logger.info('dispatching tasks')
-
-    create_update_element_history_fixtures_dispatch_task()
-
-    return 'elements queued'
-
-
-@app.route('/update_element_history_fixtures_dispatch', methods=['POST'])
-def update_element_history_fixtures_dispatch_route():
-    logger = logging.getLogger(__name__)
-
     logger.info('purging queue')
     utils.purge_cloud_queue('update-element-history-fixtures')
 
     elements = element_data.get_elements()
 
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        executor.map(create_update_element_history_fixtures_task, elements)
+    pool = Pool(processes=1)
+    pool.map_async(create_update_element_history_fixtures_task, elements)
 
     return 'elements queued'
 
@@ -195,24 +153,13 @@ def update_element_history_fixtures_element_route(element):
 def update_entry_picks_chips_route():
     logger = logging.getLogger(__name__)
 
-    logger.info('dispatching tasks')
-
-    create_update_entry_picks_chips_dispatch_task()
-
-    return 'entries queued'
-
-
-@app.route('/update_entry_picks_chips_dispatch', methods=['POST'])
-def update_entry_picks_chips_dispatch_route():
-    logger = logging.getLogger(__name__)
-
     logger.info('purging queue')
     utils.purge_cloud_queue('update-entry-picks-chips')
 
     entries = entry_data.get_top_entries()
 
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        executor.map(create_update_entry_picks_chips_task, entries)
+    pool = Pool(processes=1)
+    pool.map_async(create_update_entry_picks_chips_task, entries)
 
     return 'entries queued'
 
