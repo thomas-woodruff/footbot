@@ -2,7 +2,7 @@ import logging
 from footbot.data import utils, element_data, entry_data
 from footbot.optimiser import team_selector
 from flask import Flask, request
-from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -132,8 +132,10 @@ def update_element_history_fixtures_route():
 
     elements = element_data.get_elements()
 
-    pool = Pool(processes=1)
-    pool.map_async(create_update_element_history_fixtures_task, elements)
+    logger.info('queueing elements')
+    with ThreadPoolExecutor() as executor:
+        executor.map(create_update_element_history_fixtures_task, elements)
+    logger.info('elements queued')
 
     return 'elements queued'
 
@@ -158,8 +160,10 @@ def update_entry_picks_chips_route():
 
     entries = entry_data.get_top_entries()
 
-    pool = Pool(processes=1)
-    pool.map_async(create_update_entry_picks_chips_task, entries)
+    logger.info('queueing entries')
+    with ThreadPoolExecutor() as executor:
+        executor.map(create_update_entry_picks_chips_task, entries)
+    logger.info('entries queued')
 
     return 'entries queued'
 
