@@ -24,7 +24,9 @@ def create_update_element_history_fixtures_task(element):
 
     utils.create_cloud_task(
         task,
-        'update-element-history-fixtures')
+        'update-element-history-fixtures',
+        delay=120
+    )
 
 
 def create_update_entry_picks_chips_task(entry):
@@ -40,7 +42,9 @@ def create_update_entry_picks_chips_task(entry):
 
     utils.create_cloud_task(
         task,
-        'update-entry-picks-chips')
+        'update-entry-picks-chips',
+        delay=120
+    )
 
 
 def update_element_history_fixtures_worker(element):
