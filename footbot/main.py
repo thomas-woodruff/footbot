@@ -2,7 +2,6 @@ import logging
 from footbot.data import utils, element_data, entry_data
 from footbot.optimiser import team_selector
 from flask import Flask, request
-from concurrent.futures import ThreadPoolExecutor
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -23,12 +22,9 @@ def create_update_element_history_fixtures_task(element):
         }
     }
 
-    response = utils.create_cloud_task(
+    utils.create_cloud_task(
         task,
         'update-element-history-fixtures')
-
-    return response
-
 
 
 def create_update_entry_picks_chips_task(entry):
@@ -42,11 +38,9 @@ def create_update_entry_picks_chips_task(entry):
         }
     }
 
-    response = utils.create_cloud_task(
+    utils.create_cloud_task(
         task,
         'update-entry-picks-chips')
-
-    return response
 
 
 def update_element_history_fixtures_worker(element):
@@ -133,8 +127,10 @@ def update_element_history_fixtures_route():
     elements = element_data.get_elements()
 
     logger.info('queueing elements')
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        executor.map(create_update_element_history_fixtures_task, elements)
+
+    for element in elements:
+        create_update_element_history_fixtures_task(element)
+
     logger.info('elements queued')
 
     return 'elements queued'
@@ -161,8 +157,10 @@ def update_entry_picks_chips_route():
     entries = entry_data.get_top_entries()
 
     logger.info('queueing entries')
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        executor.map(create_update_entry_picks_chips_task, entries)
+
+    for entry in entries:
+        create_update_entry_picks_chips_task(entry)
+
     logger.info('entries queued')
 
     return 'entries queued'
