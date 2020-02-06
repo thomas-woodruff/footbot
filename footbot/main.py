@@ -133,7 +133,7 @@ def update_element_history_fixtures_route():
     elements = element_data.get_elements()
 
     logger.info('queueing elements')
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         executor.map(create_update_element_history_fixtures_task, elements)
     logger.info('elements queued')
 
@@ -161,7 +161,7 @@ def update_entry_picks_chips_route():
     entries = entry_data.get_top_entries()
 
     logger.info('queueing entries')
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         executor.map(create_update_entry_picks_chips_task, entries)
     logger.info('entries queued')
 
