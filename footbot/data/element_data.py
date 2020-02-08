@@ -61,6 +61,10 @@ def get_element_df():
     ]:
         element_df[i] = element_df[i].astype('datetime64[ms]')
 
+    # this is a hack to deal with Bešić
+    # UnicodeEncodeError: 'latin-1' codec can't encode character '\u0161' in position 119806: Body ('š') is not valid Latin-1. Use body.encode('utf-8') if you want to send it encoded in UTF-8.
+    element_df = element_df[element_df['element'] != 522]
+
     return element_df
 
 

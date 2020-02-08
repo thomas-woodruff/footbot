@@ -1,3 +1,4 @@
+import logging
 import unidecode as u
 import os
 from google.cloud import bigquery, tasks_v2
@@ -7,9 +8,18 @@ import requests
 from six import StringIO
 
 
+log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=log_fmt)
+logger = logging.getLogger(__name__)
+
+
 def get_safe_web_name(web_name):
     '''remove accents and casing from web name'''
-    return u.unidecode(web_name).lower()
+    try:
+        return u.unidecode(web_name).lower()
+    except Exception as e:
+        logger.info(e)
+        return web_name.lower()
 
 
 def update_return_dict(d, k, v):
@@ -51,11 +61,10 @@ def set_up_bigquery(
 
 def run_query(
         sql,
-        secrets_path='./secrets/service_account.json'
+        client
 ):
     '''run bigquery sql and return dataframe'''
     try:
-        client = set_up_bigquery(secrets_path)
         return client.query(sql).to_dataframe()
     except Exception as e:
         print(e)
@@ -65,13 +74,12 @@ def write_to_table(
         dataset,
         table,
         df,
-        write_disposition='WRITE_APPEND',
-        secrets_path='./secrets/service_account.json'
+        client,
+        write_disposition='WRITE_APPEND'
 ):
     '''write data to bigquery table'''
     try:
         buf = StringIO()
-        client = set_up_bigquery(secrets_path)
 
         dataset_ref = client.dataset(dataset)
         table_ref = dataset_ref.table(table)
@@ -89,17 +97,18 @@ def write_to_table(
             buf, table_ref, job_config=job_config)
 
     except Exception as e:
-        print(e)
+        logger.error(e)
+        raise e
 
 
 def create_cloud_task(
         task,
         queue,
+        client,
         project='footbot-001',
         location='europe-west2',
         delay=None
 ):
-    client = set_up_tasks()
     parent = client.queue_path(project, location, queue)
 
     if delay:
@@ -113,10 +122,10 @@ def create_cloud_task(
 
 def purge_cloud_queue(
         queue,
+        client,
         project='footbot-001',
         location='europe-west2'
 ):
-    client = set_up_tasks()
     parent = client.queue_path(project, location, queue)
     return client.purge_queue(parent)
 
