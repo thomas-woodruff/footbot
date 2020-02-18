@@ -1,5 +1,6 @@
 import logging
 from footbot.data import utils, element_data, entry_data
+from footbot.predictor import train_predict
 from footbot.optimiser import team_selector
 from flask import Flask, request
 
@@ -262,6 +263,29 @@ def update_entry_picks_chips_entry_route_put(entry):
     except Exception as e:
         logger.error(f'Unable to update entry {entry} with exception {e}')
         return 'bad news!'
+
+
+@app.route('/update_predictions')
+def update_predictions_route():
+    logger.info('setting up big query client')
+    client = utils.set_up_bigquery()
+
+    predict_df = train_predict.get_predicted_points_df(
+        './footbot/predictor/sql/train.sql',
+        './footbot/predictor/sql/predict.sql',
+        client
+    )
+
+    logger.info('writing predictions')
+    utils.write_to_table('fpl',
+                         'element_gameweeks_predictions_1920_v01',
+                         predict_df,
+                         client,
+                         write_disposition='WRITE_TRUNCATE'
+                         )
+    logger.info('done writing predictions')
+
+    return 'predictions updated'
 
 
 @app.route('/optimise_team/<entry>')
