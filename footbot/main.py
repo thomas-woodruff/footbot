@@ -162,7 +162,7 @@ def update_element_history_fixtures_route():
     tasks_client = utils.set_up_tasks()
 
     logger.info('purging queue')
-    utils.purge_cloud_queue('update-element-history-fixtures', tasks_client )
+    utils.purge_cloud_queue('update-element-history-fixtures', tasks_client)
 
     elements = element_data.get_elements()
 
@@ -183,7 +183,7 @@ def update_element_history_fixtures_route():
     logger.info('queueing elements')
 
     for element in elements:
-        create_update_element_history_fixtures_task(element, tasks_client )
+        create_update_element_history_fixtures_task(element, tasks_client)
 
     logger.info('elements queued')
 

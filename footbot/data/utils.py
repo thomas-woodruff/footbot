@@ -85,7 +85,7 @@ def write_to_table(
         table_ref = dataset_ref.table(table)
 
         job_config = bigquery.LoadJobConfig()
-        job_config.autodetect = True
+        job_config.source_format = 'CSV'
         job_config.skip_leading_rows = 1
         job_config.write_disposition = write_disposition
 
@@ -93,7 +93,7 @@ def write_to_table(
 
         buf.seek(0)
 
-        client.load_table_from_file(
+        return client.load_table_from_file(
             buf, table_ref, job_config=job_config)
 
     except Exception as e:
