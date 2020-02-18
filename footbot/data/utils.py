@@ -93,8 +93,10 @@ def write_to_table(
 
         buf.seek(0)
 
-        return client.load_table_from_file(
+        job = client.load_table_from_file(
             buf, table_ref, job_config=job_config)
+
+        return job.result()
 
     except Exception as e:
         logger.error(e)

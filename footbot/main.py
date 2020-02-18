@@ -58,79 +58,79 @@ def update_element_history_fixtures_worker(
         element,
         delete=False
 ):
-    logger.info('setting up client')
+    logger.info(f'setting up client for element {element}')
     client = utils.set_up_bigquery()
 
-    logger.info('getting element gameweek history and fixtures')
+    logger.info(f'getting element {element} gameweek history and fixtures')
     element_history_df, element_fixtures_df = element_data.get_element_history_fixture_dfs(element)
 
     if delete:
-        logger.info('deleting element gameweek history')
+        logger.info(f'deleting element {element} gameweek history')
         utils.run_query(
             f'DELETE FROM `footbot-001.fpl.element_gameweeks_1920` WHERE element = {element}',
             client
         )
 
-    logger.info('writing element gameweek history')
+    logger.info(f'writing element {element} gameweek history')
     utils.write_to_table('fpl',
                          'element_gameweeks_1920',
                          element_history_df,
                          client
                          )
-    logger.info('done writing element gameweek history')
+    logger.info(f'done writing element {element} gameweek history')
 
     if delete:
-        logger.info('deleting element fixtures')
+        logger.info(f'deleting element {element} fixtures')
         utils.run_query(
             f'DELETE FROM `footbot-001.fpl.element_future_fixtures_1920` WHERE element = {element}',
             client
         )
 
-    logger.info('writing element fixtures')
+    logger.info(f'writing element {element} fixtures')
     utils.write_to_table('fpl',
                          'element_future_fixtures_1920',
                          element_fixtures_df,
                          client
                          )
-    logger.info('done writing element fixtures')
+    logger.info(f'done writing element {element} fixtures')
 
 
 def update_entry_picks_chips_worker(entry, delete=False):
-    logger.info('setting up client')
+    logger.info(f'setting up client for entry {entry}')
     client = utils.set_up_bigquery()
 
-    logger.info('getting entry data')
+    logger.info(f'getting entry {entry} data')
     picks_df, chips_df = entry_data.get_top_entry_dfs(entry)
 
     if delete:
-        logger.info('deleting entry picks')
+        logger.info(f'deleting entry {entry} picks')
         utils.run_query(
             f'DELETE FROM `footbot-001.fpl.top_entries_picks_1920` WHERE entry = {entry}',
             client
         )
-    logger.info('writing entry picks')
+    logger.info(f'writing entry {entry} picks')
 
     utils.write_to_table('fpl',
                          'top_entries_picks_1920',
                          picks_df,
                          client
                          )
-    logger.info('done writing entry picks')
+    logger.info(f'done writing entry {entry} picks')
 
     if delete:
-        logger.info('deleting entry chips')
+        logger.info(f'deleting entry {entry} chips')
         utils.run_query(
             f'DELETE FROM `footbot-001.fpl.top_entries_chips_1920` WHERE entry = {entry}',
             client
         )
 
-    logger.info('writing entry chips')
+    logger.info(f'writing entry {entry} chips')
     utils.write_to_table('fpl',
                          'top_entries_chips_1920',
                          chips_df,
                          client
                          )
-    logger.info('done writing entry chips')
+    logger.info(f'done writing entry {entry} chips')
 
 
 @app.route('/')
