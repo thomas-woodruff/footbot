@@ -36,9 +36,6 @@ def get_predicted_points_df(
     logger.info('getting prediction dataset')
     predict_df = get_dataframe_from_sql(predict_sql_path, client)
 
-    train_features_df = train_df.drop('total_points', axis=1)
-    predict_features_df = predict_df.drop(['event', 'element', 'safe_web_name'], axis=1)
-
     categorical_features = [
         'element_type',
         'team',
@@ -50,7 +47,7 @@ def get_predicted_points_df(
         'was_early'
     ]
 
-    numerical_features = [i for i in train_features_df.columns if i not in categorical_features]
+    numerical_features = [i for i in train_df.columns[1:] if i not in categorical_features]
 
     numerical_transformer = Pipeline([
         ('impute missing values', SimpleImputer()),
@@ -68,9 +65,11 @@ def get_predicted_points_df(
     ])
 
     logger.info('fitting model')
-    model.fit(train_features_df, train_df['total_points'])
+    model.fit(train_df.drop('total_points', axis=1), train_df['total_points'])
 
     logger.info('making predictions')
-    predict_df['predicted_total_points'] = model.predict(predict_features_df)
+    predict_df['predicted_total_points'] = model.predict(
+        predict_df.drop(['event', 'element', 'safe_web_name'], axis=1)
+    )
 
     return predict_df
