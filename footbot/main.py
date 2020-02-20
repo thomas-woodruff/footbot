@@ -294,14 +294,20 @@ def optimise_team_route(entry):
     bench_factor = float(request.args.get('bench_factor', 0.1))
     transfer_penalty = float(request.args.get('transfer_penalty', 4))
     transfer_limit = int(request.args.get('transfer_limit', 15))
+    prediction_window = int(request.args.get('prediction_window', 2))
 
-    return team_selector.optimise_entry(
-        entry,
-        total_budget=total_budget,
-        bench_factor=bench_factor,
-        transfer_penalty=transfer_penalty,
-        transfer_limit=transfer_limit
-    )
+    try:
+        return team_selector.optimise_entry(
+            entry,
+            total_budget=total_budget,
+            bench_factor=bench_factor,
+            transfer_penalty=transfer_penalty,
+            transfer_limit=transfer_limit,
+            prediction_window=prediction_window
+        )
+    except Exception as e:
+        logger.error(e)
+        return 'Uh oh!'
 
 
 if __name__ == '__main__':

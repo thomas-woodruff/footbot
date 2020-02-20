@@ -1,7 +1,13 @@
+import logging
 import cvxpy as cp
 import numpy as np
-from footbot.data import element_data
+from footbot.data import utils
 import requests
+
+
+log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=log_fmt)
+logger = logging.getLogger(__name__)
 
 
 def select_team(
@@ -153,40 +159,33 @@ def optimise_entry(
 		total_budget=1000,
 		bench_factor=0.1,
 		transfer_penalty=4,
-		transfer_limit=15
+		transfer_limit=15,
+		prediction_window=2
 ):
 	'''
 	optimise a given entry based on their picks
 	for the current event
 	'''
 
-	df = element_data.get_element_df()
-	df['average_points'] = df['total_points'] / df['current_event']
-	df = df[[
-		'element',
-		'element_type',
-		'now_cost',
-		'team',
-		'average_points',
-		'safe_web_name'
-	]]
-	df.columns = [
-		'element',
-		'element_type',
-		'value',
-		'team',
-		'average_points',
-		'safe_web_name'
-	]
+	with open('./footbot/optimiser/sql/optimiser.sql', 'r') as file:
+		sql = file.read()
+
+	logger.info('getting predictions')
+	client = utils.set_up_bigquery()
+	df = utils.run_query(sql.format(prediction_window=prediction_window), client)
+
 	players = df.to_dict('records')
 
+	logger.info('getting current event')
 	bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
 	bootstrap_data = bootstrap_request.json()
 	current_event = [i for i in bootstrap_data['events'] if i['is_current']][0]['id']
 
+	logger.info('getting entry data')
 	entry_request = requests.get(f'https://fantasy.premierleague.com/api/entry/{entry}/event/{current_event}/picks/')
 	entry_data = entry_request.json()
 
+	logger.info('optimising team')
 	(
 		first_team_selection_elements,
 		captain_selection_elements,
