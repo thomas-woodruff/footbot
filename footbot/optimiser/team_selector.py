@@ -3,6 +3,8 @@ import cvxpy as cp
 import numpy as np
 from footbot.data import utils
 import requests
+import json
+import pandas as pd
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -160,21 +162,13 @@ def optimise_entry(
 		bench_factor=0.1,
 		transfer_penalty=4,
 		transfer_limit=15,
-		prediction_window=2
+		prediction_window=2,
+		private=True
 ):
 	'''
 	optimise a given entry based on their picks
 	for the current event
 	'''
-
-	with open('./footbot/optimiser/sql/optimiser.sql', 'r') as file:
-		sql = file.read()
-
-	logger.info('getting predictions')
-	client = utils.set_up_bigquery()
-	df = utils.run_query(sql.format(prediction_window=prediction_window), client)
-
-	players = df.to_dict('records')
 
 	logger.info('getting current event')
 	bootstrap_request = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/')
@@ -184,6 +178,42 @@ def optimise_entry(
 	logger.info('getting entry data')
 	entry_request = requests.get(f'https://fantasy.premierleague.com/api/entry/{entry}/event/{current_event}/picks/')
 	entry_data = entry_request.json()
+	existing_squad_elements = [i['element'] for i in entry_data['picks']]
+
+	with open('./footbot/optimiser/sql/optimiser.sql', 'r') as sql_file:
+		sql = sql_file.read()
+
+	logger.info('getting predictions')
+	client = utils.set_up_bigquery()
+	df = utils.run_query(sql.format(prediction_window=prediction_window), client)
+
+	if private:
+		session = requests.session()
+
+		with open('./secrets/fpl_login.json') as secrets_file:
+			secrets = json.loads(secrets_file.read())
+
+		payload = {
+			'redirect_uri': 'https://fantasy.premierleague.com/a/login',
+			'app': 'plfpl-web'
+		}
+		payload.update(secrets)
+		logger.info('authenticating for entry')
+		session.post('https://users.premierleague.com/accounts/login/', data=payload)
+
+		logger.info('getting private entry data')
+		private_data = session.get(f'https://fantasy.premierleague.com/api/my-team/{entry}').json()
+		private_df = pd.DataFrame(private_data['picks'])[['element', 'selling_price']]
+
+		existing_squad_elements = list(private_df['element'].values)
+
+		total_budget = private_df['selling_price'].sum()
+
+		df = df.join(private_df.set_index('element'), on='element')
+		df['value'] = df['selling_price'].fillna(df['value'])
+		df = df.drop('selling_price', axis=1)
+
+	players = df.to_dict('records')
 
 	logger.info('optimising team')
 	(
@@ -198,7 +228,7 @@ def optimise_entry(
 		bench_factor=bench_factor,
 		transfer_penalty=transfer_penalty,
 		transfer_limit=transfer_limit,
-		existing_squad_elements=[i['element'] for i in entry_data['picks']]
+		existing_squad_elements=existing_squad_elements
 	)
 
 	first_team = list(
