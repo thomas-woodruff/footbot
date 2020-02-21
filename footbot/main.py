@@ -295,6 +295,7 @@ def optimise_team_route(entry):
     transfer_penalty = float(request.args.get('transfer_penalty', 4))
     transfer_limit = int(request.args.get('transfer_limit', 15))
     prediction_window = int(request.args.get('prediction_window', 2))
+    private = bool(request.args.get('private', False))
 
     try:
         return team_selector.optimise_entry(
@@ -303,7 +304,8 @@ def optimise_team_route(entry):
             bench_factor=bench_factor,
             transfer_penalty=transfer_penalty,
             transfer_limit=transfer_limit,
-            prediction_window=prediction_window
+            prediction_window=prediction_window,
+            private=private
         )
     except Exception as e:
         logger.error(e)

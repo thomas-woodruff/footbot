@@ -163,7 +163,7 @@ def optimise_entry(
 		transfer_penalty=4,
 		transfer_limit=15,
 		prediction_window=2,
-		private=True
+		private=False
 ):
 	'''
 	optimise a given entry based on their picks
