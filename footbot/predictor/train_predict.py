@@ -4,7 +4,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Lasso
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -61,7 +61,7 @@ def get_predicted_points_df(
 
     model = Pipeline([
         ('pre-process features', preprocess),
-        ('predictive model', Ridge(alpha=180))
+        ('predictive model', Lasso(alpha=0.0020))
     ])
 
     logger.info('fitting model')

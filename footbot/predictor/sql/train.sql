@@ -15,4 +15,4 @@ SELECT
 FROM
   `footbot-001.fpl.element_gameweeks_features_all_v01`
 WHERE
-  rolling_avg_total_points_element_p10 > 0
+  rolling_avg_minutes_element_p10 >= 45

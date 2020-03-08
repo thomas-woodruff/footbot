@@ -1,7 +1,7 @@
 import logging
 import unidecode as u
 import os
-from google.cloud import bigquery, tasks_v2
+from google.cloud import bigquery, tasks_v2, bigquery_storage_v1beta1
 from google.protobuf import timestamp_pb2
 import datetime
 import requests
@@ -65,7 +65,8 @@ def run_query(
 ):
     '''run bigquery sql and return dataframe'''
     try:
-        return client.query(sql).to_dataframe()
+        bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient()
+        return client.query(sql).to_dataframe(bqstorage_client=bqstorage_client)
     except Exception as e:
         print(e)
 
