@@ -2,17 +2,17 @@ WITH
   predictions AS (
   SELECT
     element,
-    SUM(predicted_total_points)/{prediction_window} AS average_points
+    SUM(predicted_total_points)/({end_event} - {start_event} + 1) AS average_points
   FROM (
     SELECT
       element,
-      predicted_total_points,
-      DENSE_RANK() OVER(ORDER BY event) AS event_order
+      event,
+      predicted_total_points
     FROM
       `footbot-001.fpl.element_gameweeks_predictions_1920_v01` )
   WHERE
-    event_order BETWEEN 1
-    AND {prediction_window}
+    event BETWEEN {start_event}
+    AND {end_event}
   GROUP BY
     1 ),
   --------------------------------------------------------------------------------------------------------------------------------------------------------------

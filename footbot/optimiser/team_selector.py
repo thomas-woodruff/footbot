@@ -90,7 +90,7 @@ def select_team(
 		player_position_weights @ (first_team + bench) == [2, 5, 5, 3],
 		player_position_weights @ first_team >= [1, 3, 3, 1],
 		player_position_weights @ first_team <= [1, 5, 5, 3],
-		# player number contraints
+		# player number constraints
 		np.ones(len(players)) @ first_team == 11,
 		np.ones(len(players)) @ captain == 1,
 		np.ones(len(players)) @ bench == 4,
@@ -162,7 +162,8 @@ def optimise_entry(
 		bench_factor=0.1,
 		transfer_penalty=4,
 		transfer_limit=15,
-		prediction_window=2,
+		start_event=1,
+		end_event=38,
 		private=False
 ):
 	'''
@@ -185,7 +186,10 @@ def optimise_entry(
 
 	logger.info('getting predictions')
 	client = utils.set_up_bigquery()
-	df = utils.run_query(sql.format(prediction_window=prediction_window), client)
+	df = utils.run_query(sql.format(
+		start_event=start_event,
+		end_event=end_event
+	), client)
 
 	if private:
 		session = requests.session()

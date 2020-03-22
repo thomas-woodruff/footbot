@@ -1,4 +1,5 @@
 import logging
+import requests
 from footbot.data import utils
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -12,29 +13,23 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 logger = logging.getLogger(__name__)
 
 
-def get_dataframe_from_sql(
-        file_path,
-        client
-):
-    '''get training data from bigquery'''
-
-    with open(file_path, 'r') as file:
-        sql = file.read()
-
-    df = utils.run_query(sql, client)
-
-    return df
-
-
 def get_predicted_points_df(
         train_sql_path,
         predict_sql_path,
         client
 ):
+    bootstrap_data = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/').json()
+    current_event = [i for i in bootstrap_data['events'] if i['is_current']][0]['id']
+
     logger.info('getting training dataset')
-    train_df = get_dataframe_from_sql(train_sql_path, client)
+    with open(train_sql_path, 'r') as file:
+        train_sql = file.read()
+        train_df = utils.run_query(train_sql, client)
+
     logger.info('getting prediction dataset')
-    predict_df = get_dataframe_from_sql(predict_sql_path, client)
+    with open(predict_sql_path, 'r') as file:
+        predict_sql = file.read().format(current_event=current_event)
+        predict_df = utils.run_query(predict_sql, client)
 
     categorical_features = [
         'element_type',

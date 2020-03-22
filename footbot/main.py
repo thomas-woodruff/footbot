@@ -3,6 +3,7 @@ from footbot.data import utils, element_data, entry_data
 from footbot.predictor import train_predict
 from footbot.optimiser import team_selector
 from flask import Flask, request
+import requests
 
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -290,11 +291,16 @@ def update_predictions_route():
 
 @app.route('/optimise_team/<entry>')
 def optimise_team_route(entry):
+
+    bootstrap_data = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/').json()
+    current_event = [i for i in bootstrap_data['events'] if i['is_current']][0]['id']
+
     total_budget = int(request.args.get('total_budget', 1000))
     bench_factor = float(request.args.get('bench_factor', 0.1))
     transfer_penalty = float(request.args.get('transfer_penalty', 4))
     transfer_limit = int(request.args.get('transfer_limit', 15))
-    prediction_window = int(request.args.get('prediction_window', 2))
+    start_event = int(request.args.get('start_event', current_event + 1))
+    end_event = int(request.args.get('end_event', current_event + 1))
     private = bool(request.args.get('private', False))
 
     try:
@@ -304,7 +310,8 @@ def optimise_team_route(entry):
             bench_factor=bench_factor,
             transfer_penalty=transfer_penalty,
             transfer_limit=transfer_limit,
-            prediction_window=prediction_window,
+            start_event=start_event,
+            end_event=end_event,
             private=private
         )
     except Exception as e:
