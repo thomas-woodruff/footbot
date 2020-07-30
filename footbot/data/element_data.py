@@ -77,6 +77,9 @@ def get_elements():
 
 
 def sanitise_element_history_df(element_history_df):
+    if len(element_history_df) == 0:
+        return element_history_df
+
     element_history_df.columns = ['event' if i == 'round' else i for i in element_history_df.columns]
 
     # sanitise data types
@@ -97,6 +100,9 @@ def sanitise_element_history_df(element_history_df):
 
 
 def sanitise_element_fixtures_df(element_fixtures_df):
+    if len(element_fixtures_df) == 0:
+        return element_fixtures_df
+
     element_fixtures_df = element_fixtures_df[
         ['element']
         + list(element_fixtures_df.columns)[:-1]
