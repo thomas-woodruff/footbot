@@ -10,8 +10,6 @@ from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
 from six import StringIO
 
-log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-logging.basicConfig(level=logging.INFO, format=log_fmt)
 logger = logging.getLogger(__name__)
 
 

@@ -5,8 +5,7 @@ import requests
 
 from footbot.data import utils
 
-log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-logging.basicConfig(level=logging.INFO, format=log_fmt)
+logger = logging.getLogger(__name__)
 
 
 def get_top_entries():
@@ -18,8 +17,6 @@ def get_top_entries():
 
 
 def get_top_entry_dfs(entry):
-    logger = logging.getLogger(__name__)
-
     bootstrap_request = requests.get(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
     )
