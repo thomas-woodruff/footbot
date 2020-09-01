@@ -1,12 +1,14 @@
-import logging
-import unidecode as u
-import os
-from google.cloud import bigquery, tasks_v2, bigquery_storage_v1beta1
-from google.protobuf import timestamp_pb2
 import datetime
-import requests
-from six import StringIO
+import logging
+import os
 
+import requests
+import unidecode as u
+from google.cloud import bigquery
+from google.cloud import bigquery_storage_v1beta1
+from google.cloud import tasks_v2
+from google.protobuf import timestamp_pb2
+from six import StringIO
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)

@@ -1,10 +1,14 @@
 import logging
-from footbot.data import utils, element_data, entry_data
-from footbot.predictor import train_predict
-from footbot.optimiser import team_selector
-from flask import Flask, request
-import requests
 
+import requests
+from flask import Flask
+from flask import request
+
+from footbot.data import element_data
+from footbot.data import entry_data
+from footbot.data import utils
+from footbot.optimiser import team_selector
+from footbot.predictor import train_predict
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)

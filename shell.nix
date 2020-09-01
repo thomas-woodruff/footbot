@@ -31,6 +31,7 @@ let
       google_cloud_bigquery_storage
 
       pytest
+      isort
   ]));
 
 in mkShell {

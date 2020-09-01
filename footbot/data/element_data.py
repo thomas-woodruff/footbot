@@ -1,6 +1,8 @@
+import datetime
+
 import pandas as pd
 import requests
-import datetime
+
 from footbot.data import utils
 
 

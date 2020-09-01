@@ -1,11 +1,12 @@
+import json
 import logging
+
 import cvxpy as cp
 import numpy as np
-from footbot.data import utils
-import requests
-import json
 import pandas as pd
+import requests
 
+from footbot.data import utils
 
 log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=log_fmt)
