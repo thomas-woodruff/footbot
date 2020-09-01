@@ -33,6 +33,7 @@ let
       pytest
       isort
       black
+      flake8
   ]));
 
 in mkShell {

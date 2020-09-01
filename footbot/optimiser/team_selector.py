@@ -24,9 +24,9 @@ def select_team(
     transfer_limit=15,
 ):
     """
-	solve team selection from scratch
-	players is an array of dicts
-	"""
+    solve team selection from scratch
+    players is an array of dicts
+    """
 
     # munge player data
     player_elements = np.array([i["element"] for i in players])
@@ -159,9 +159,9 @@ def optimise_entry(
     private=False,
 ):
     """
-	optimise a given entry based on their picks
-	for the current event
-	"""
+    optimise a given entry based on their picks
+    for the current event
+    """
 
     logger.info("getting current event")
     bootstrap_request = requests.get(

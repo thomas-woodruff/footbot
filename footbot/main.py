@@ -143,12 +143,12 @@ def update_element_history_fixtures_route():
 
     logger.info("deleting element gameweek history")
     utils.run_query(
-        f"DELETE FROM `footbot-001.fpl.element_gameweeks_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.element_gameweeks_1920` WHERE true",
         big_query_client,
     )
     logger.info("deleting element fixtures")
     utils.run_query(
-        f"DELETE FROM `footbot-001.fpl.element_future_fixtures_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.element_future_fixtures_1920` WHERE true",
         big_query_client,
     )
 
@@ -195,12 +195,12 @@ def update_entry_picks_chips_route():
 
     logger.info("deleting entry picks history")
     utils.run_query(
-        f"DELETE FROM `footbot-001.fpl.top_entries_picks_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.top_entries_picks_1920` WHERE true",
         big_query_client,
     )
     logger.info("deleting entry chips history")
     utils.run_query(
-        f"DELETE FROM `footbot-001.fpl.top_entries_chips_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.top_entries_chips_1920` WHERE true",
         big_query_client,
     )
 
