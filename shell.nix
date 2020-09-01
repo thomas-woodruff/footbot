@@ -32,6 +32,7 @@ let
 
       pytest
       isort
+      black
   ]));
 
 in mkShell {
