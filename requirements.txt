@@ -44,3 +44,9 @@ six==1.14.0
 Unidecode==1.1.1
 urllib3==1.25.8
 Werkzeug==0.16.1
+
+# test dependencies
+pytest
+isort
+black
+flake8
