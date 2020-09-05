@@ -12,11 +12,15 @@ def get_bootstrap():
     ).json()
 
 
-def get_element_df():
+def get_element_df(bootstrap_data):
     """get contemporaneous element data"""
-    bootstrap_data = get_bootstrap()
 
-    current_event = [i for i in bootstrap_data["events"] if i["is_current"]][0]["id"]
+    # if no events are current, current event is zero
+    # season has yet to start
+    current_event = 0
+    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
+        # otherwise, take event id of event that is current
+        current_event = event["id"]
 
     current_datetime = datetime.datetime.now()
 
@@ -116,10 +120,8 @@ def get_element_df():
     return element_df
 
 
-def get_elements():
+def get_elements(bootstrap_data):
     """get list of all elements"""
-
-    bootstrap_data = get_bootstrap()
 
     return [i["id"] for i in bootstrap_data["elements"]]
 

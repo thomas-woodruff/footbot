@@ -117,7 +117,8 @@ def home_route():
 @app.route("/update_element_data")
 def update_element_data_route():
     logger.info("getting element data")
-    element_df = element_data.get_element_df()
+    bootstrap_data = element_data.get_bootstrap()
+    element_df = element_data.get_element_df(bootstrap_data)
 
     client = utils.set_up_bigquery()
 
@@ -136,7 +137,8 @@ def update_element_history_fixtures_route():
     logger.info("purging queue")
     utils.purge_cloud_queue("update-element-history-fixtures", tasks_client)
 
-    elements = element_data.get_elements()
+    bootstrap_data = element_data.get_bootstrap()
+    elements = element_data.get_elements(bootstrap_data)
 
     logger.info("setting up big query client")
     big_query_client = utils.set_up_bigquery()
