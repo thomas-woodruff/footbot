@@ -1,8 +1,8 @@
-from footbot.data.element_data import get_bootstrap
+import footbot.data.element_data as ed
 
 
 def test_get_bootstrap():
-    data = get_bootstrap()
+    data = ed.get_bootstrap()
     assert "elements" in data
     assert "events" in data
     assert isinstance(data["elements"], list)

@@ -153,12 +153,27 @@ def sanitise_element_fixtures_df(element_fixtures_df):
     if len(element_fixtures_df) == 0:
         return element_fixtures_df
 
-    element_fixtures_df = element_fixtures_df[
-        ["element"] + list(element_fixtures_df.columns)[:-1]
-    ]
-
     for i in ["kickoff_time"]:
         element_fixtures_df[i] = element_fixtures_df[i].astype("datetime64[ms]")
+
+    element_fixtures_df = element_fixtures_df[
+        [
+            "element",
+            "code",
+            "team_h",
+            "team_h_score",
+            "team_a",
+            "team_a_score",
+            "event",
+            "finished",
+            "minutes",
+            "provisional_start_time",
+            "kickoff_time",
+            "event_name",
+            "is_home",
+            "difficulty",
+        ]
+    ]
 
     return element_fixtures_df
 

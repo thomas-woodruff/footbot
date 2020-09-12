@@ -129,7 +129,7 @@ def update_element_data_route():
     return "Updated element data, baby"
 
 
-# @app.route("/update_element_history_fixtures")
+@app.route("/update_element_history_fixtures")
 def update_element_history_fixtures_route():
     logger.info("setting up client")
     tasks_client = utils.set_up_tasks()
@@ -164,7 +164,7 @@ def update_element_history_fixtures_route():
     return "elements queued"
 
 
-# @app.route("/update_element_history_fixtures/<element>", methods=["POST"])
+@app.route("/update_element_history_fixtures/<element>", methods=["POST"])
 def update_element_history_fixtures_element_route_post(element):
     try:
         update_element_history_fixtures_worker(element)
@@ -174,7 +174,7 @@ def update_element_history_fixtures_element_route_post(element):
         return "bad news!"
 
 
-# @app.route("/update_element_history_fixtures/<element>", methods=["PUT"])
+@app.route("/update_element_history_fixtures/<element>", methods=["PUT"])
 def update_element_history_fixtures_element_route_put(element):
     try:
         update_element_history_fixtures_worker(element, delete=True)
