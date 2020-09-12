@@ -166,7 +166,13 @@ def optimise_entry(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
     )
     bootstrap_data = bootstrap_request.json()
-    current_event = [i for i in bootstrap_data["events"] if i["is_current"]][0]["id"]
+
+    # if no events are current, current event is zero
+    # season has yet to start
+    current_event = 0
+    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
+        # otherwise, take event id of event that is current
+        current_event = event["id"]
 
     logger.info("getting entry data")
     entry_request = requests.get(

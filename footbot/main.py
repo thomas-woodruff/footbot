@@ -238,7 +238,7 @@ def update_entry_picks_chips_entry_route_put(entry):
         return "bad news!"
 
 
-# @app.route("/update_predictions")
+@app.route("/update_predictions")
 def update_predictions_route():
     logger.info("setting up big query client")
     client = utils.set_up_bigquery()
@@ -262,13 +262,19 @@ def update_predictions_route():
     return "predictions updated"
 
 
-# @app.route("/optimise_team/<entry>")
+@app.route("/optimise_team/<entry>")
 def optimise_team_route(entry):
 
     bootstrap_data = requests.get(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
     ).json()
-    current_event = [i for i in bootstrap_data["events"] if i["is_current"]][0]["id"]
+
+    # if no events are current, current event is zero
+    # season has yet to start
+    current_event = 0
+    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
+        # otherwise, take event id of event that is current
+        current_event = event["id"]
 
     total_budget = int(request.args.get("total_budget", 1000))
     bench_factor = float(request.args.get("bench_factor", 0.1))
