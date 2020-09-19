@@ -12,11 +12,15 @@ def get_bootstrap():
     ).json()
 
 
-def get_element_df():
+def get_element_df(bootstrap_data):
     """get contemporaneous element data"""
-    bootstrap_data = get_bootstrap()
 
-    current_event = [i for i in bootstrap_data["events"] if i["is_current"]][0]["id"]
+    # if no events are current, current event is zero
+    # season has yet to start
+    current_event = 0
+    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
+        # otherwise, take event id of event that is current
+        current_event = event["id"]
 
     current_datetime = datetime.datetime.now()
 
@@ -116,10 +120,8 @@ def get_element_df():
     return element_df
 
 
-def get_elements():
+def get_elements(bootstrap_data):
     """get list of all elements"""
-
-    bootstrap_data = get_bootstrap()
 
     return [i["id"] for i in bootstrap_data["elements"]]
 
@@ -151,12 +153,27 @@ def sanitise_element_fixtures_df(element_fixtures_df):
     if len(element_fixtures_df) == 0:
         return element_fixtures_df
 
-    element_fixtures_df = element_fixtures_df[
-        ["element"] + list(element_fixtures_df.columns)[:-1]
-    ]
-
     for i in ["kickoff_time"]:
         element_fixtures_df[i] = element_fixtures_df[i].astype("datetime64[ms]")
+
+    element_fixtures_df = element_fixtures_df[
+        [
+            "element",
+            "code",
+            "team_h",
+            "team_h_score",
+            "team_a",
+            "team_a_score",
+            "event",
+            "finished",
+            "minutes",
+            "provisional_start_time",
+            "kickoff_time",
+            "event_name",
+            "is_home",
+            "difficulty",
+        ]
+    ]
 
     return element_fixtures_df
 

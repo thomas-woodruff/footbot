@@ -57,24 +57,24 @@ def update_element_history_fixtures_worker(element, delete=False):
     if delete:
         logger.info(f"deleting element {element} gameweek history")
         utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.element_gameweeks_1920` WHERE element = {element}",
+            f"DELETE FROM `footbot-001.fpl.element_gameweeks_2021` WHERE element = {element}",
             client,
         )
 
     logger.info(f"writing element {element} gameweek history")
-    utils.write_to_table("fpl", "element_gameweeks_1920", element_history_df, client)
+    utils.write_to_table("fpl", "element_gameweeks_2021", element_history_df, client)
     logger.info(f"done writing element {element} gameweek history")
 
     if delete:
         logger.info(f"deleting element {element} fixtures")
         utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.element_future_fixtures_1920` WHERE element = {element}",
+            f"DELETE FROM `footbot-001.fpl.element_future_fixtures_2021` WHERE element = {element}",
             client,
         )
 
     logger.info(f"writing element {element} fixtures")
     utils.write_to_table(
-        "fpl", "element_future_fixtures_1920", element_fixtures_df, client
+        "fpl", "element_future_fixtures_2021", element_fixtures_df, client
     )
     logger.info(f"done writing element {element} fixtures")
 
@@ -89,23 +89,23 @@ def update_entry_picks_chips_worker(entry, delete=False):
     if delete:
         logger.info(f"deleting entry {entry} picks")
         utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.top_entries_picks_1920` WHERE entry = {entry}",
+            f"DELETE FROM `footbot-001.fpl.top_entries_picks_2021` WHERE entry = {entry}",
             client,
         )
     logger.info(f"writing entry {entry} picks")
 
-    utils.write_to_table("fpl", "top_entries_picks_1920", picks_df, client)
+    utils.write_to_table("fpl", "top_entries_picks_2021", picks_df, client)
     logger.info(f"done writing entry {entry} picks")
 
     if delete:
         logger.info(f"deleting entry {entry} chips")
         utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.top_entries_chips_1920` WHERE entry = {entry}",
+            f"DELETE FROM `footbot-001.fpl.top_entries_chips_2021` WHERE entry = {entry}",
             client,
         )
 
     logger.info(f"writing entry {entry} chips")
-    utils.write_to_table("fpl", "top_entries_chips_1920", chips_df, client)
+    utils.write_to_table("fpl", "top_entries_chips_2021", chips_df, client)
     logger.info(f"done writing entry {entry} chips")
 
 
@@ -117,12 +117,13 @@ def home_route():
 @app.route("/update_element_data")
 def update_element_data_route():
     logger.info("getting element data")
-    element_df = element_data.get_element_df()
+    bootstrap_data = element_data.get_bootstrap()
+    element_df = element_data.get_element_df(bootstrap_data)
 
     client = utils.set_up_bigquery()
 
     logger.info("writing element data")
-    utils.write_to_table("fpl", "element_data_1920", element_df, client)
+    utils.write_to_table("fpl", "element_data_2021", element_df, client)
     logger.info("done writing element data")
 
     return "Updated element data, baby"
@@ -136,19 +137,20 @@ def update_element_history_fixtures_route():
     logger.info("purging queue")
     utils.purge_cloud_queue("update-element-history-fixtures", tasks_client)
 
-    elements = element_data.get_elements()
+    bootstrap_data = element_data.get_bootstrap()
+    elements = element_data.get_elements(bootstrap_data)
 
     logger.info("setting up big query client")
     big_query_client = utils.set_up_bigquery()
 
     logger.info("deleting element gameweek history")
     utils.run_query(
-        "DELETE FROM `footbot-001.fpl.element_gameweeks_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.element_gameweeks_2021` WHERE true",
         big_query_client,
     )
     logger.info("deleting element fixtures")
     utils.run_query(
-        "DELETE FROM `footbot-001.fpl.element_future_fixtures_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.element_future_fixtures_2021` WHERE true",
         big_query_client,
     )
 
@@ -182,7 +184,7 @@ def update_element_history_fixtures_element_route_put(element):
         return "bad news!"
 
 
-@app.route("/update_entry_picks_chips")
+# @app.route("/update_entry_picks_chips")
 def update_entry_picks_chips_route():
     logger.info("setting up cloud tasks client")
     tasks_client = utils.set_up_tasks()
@@ -195,12 +197,12 @@ def update_entry_picks_chips_route():
 
     logger.info("deleting entry picks history")
     utils.run_query(
-        "DELETE FROM `footbot-001.fpl.top_entries_picks_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.top_entries_picks_2021` WHERE true",
         big_query_client,
     )
     logger.info("deleting entry chips history")
     utils.run_query(
-        "DELETE FROM `footbot-001.fpl.top_entries_chips_1920` WHERE true",
+        "DELETE FROM `footbot-001.fpl.top_entries_chips_2021` WHERE true",
         big_query_client,
     )
 
@@ -216,7 +218,7 @@ def update_entry_picks_chips_route():
     return "entries queued"
 
 
-@app.route("/update_entry_picks_chips/<entry>", methods=["POST"])
+# @app.route("/update_entry_picks_chips/<entry>", methods=["POST"])
 def update_entry_picks_chips_entry_route_post(entry):
     try:
         update_entry_picks_chips_worker(entry)
@@ -226,7 +228,7 @@ def update_entry_picks_chips_entry_route_post(entry):
         return "bad news!"
 
 
-@app.route("/update_entry_picks_chips/<entry>", methods=["PUT"])
+# @app.route("/update_entry_picks_chips/<entry>", methods=["PUT"])
 def update_entry_picks_chips_entry_route_put(entry):
     try:
         update_entry_picks_chips_worker(entry, delete=True)
@@ -250,7 +252,7 @@ def update_predictions_route():
     logger.info("writing predictions")
     utils.write_to_table(
         "fpl",
-        "element_gameweeks_predictions_1920_v01",
+        "element_gameweeks_predictions_2021_v01",
         predict_df,
         client,
         write_disposition="WRITE_TRUNCATE",
@@ -266,7 +268,13 @@ def optimise_team_route(entry):
     bootstrap_data = requests.get(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
     ).json()
-    current_event = [i for i in bootstrap_data["events"] if i["is_current"]][0]["id"]
+
+    # if no events are current, current event is zero
+    # season has yet to start
+    current_event = 0
+    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
+        # otherwise, take event id of event that is current
+        current_event = event["id"]
 
     total_budget = int(request.args.get("total_budget", 1000))
     bench_factor = float(request.args.get("bench_factor", 0.1))

@@ -8,6 +8,7 @@ from google.cloud import bigquery
 from google.cloud import bigquery_storage_v1beta1
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
+from six import BytesIO
 from six import StringIO
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,8 @@ def run_query(sql, client):
 def write_to_table(dataset, table, df, client, write_disposition="WRITE_APPEND"):
     """write data to bigquery table"""
     try:
-        buf = StringIO()
+        string_buffer = StringIO()
+        bytes_buffer = BytesIO()
 
         dataset_ref = client.dataset(dataset)
         table_ref = dataset_ref.table(table)
@@ -77,11 +79,21 @@ def write_to_table(dataset, table, df, client, write_disposition="WRITE_APPEND")
         job_config.skip_leading_rows = 1
         job_config.write_disposition = write_disposition
 
-        df.to_csv(buf, index=False)
+        # to_csv writes out a string
+        df.to_csv(string_buffer, index=False)
 
-        buf.seek(0)
+        # move cursor to to beginning of string buffer
+        string_buffer.seek(0)
+        # create bytes representation of string buffer
+        # needs to be encoded as utf-8 for bigquery
+        bytes_buffer.write(string_buffer.read().encode("utf-8"))
+        # move cursor to to beginning of bytes buffer
+        bytes_buffer.seek(0)
 
-        job = client.load_table_from_file(buf, table_ref, job_config=job_config)
+        # load_table_from_file expects bytes
+        job = client.load_table_from_file(
+            bytes_buffer, table_ref, job_config=job_config
+        )
 
         return job.result()
 

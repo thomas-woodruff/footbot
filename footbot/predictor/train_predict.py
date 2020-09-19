@@ -17,7 +17,13 @@ def get_predicted_points_df(train_sql_path, predict_sql_path, client):
     bootstrap_data = requests.get(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
     ).json()
-    current_event = [i for i in bootstrap_data["events"] if i["is_current"]][0]["id"]
+
+    # if no events are current, current event is zero
+    # season has yet to start
+    current_event = 0
+    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
+        # otherwise, take event id of event that is current
+        current_event = event["id"]
 
     logger.info("getting training dataset")
     with open(train_sql_path, "r") as file:
@@ -58,7 +64,7 @@ def get_predicted_points_df(train_sql_path, predict_sql_path, client):
                 numerical_transformer,
                 numerical_features,
             ),
-            ("preprocess categorical features", OneHotEncoder(), categorical_features),
+            ("preprocess categorical features", OneHotEncoder(handle_unknown='ignore'), categorical_features),
         ]
     )
 
