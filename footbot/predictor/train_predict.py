@@ -64,7 +64,11 @@ def get_predicted_points_df(train_sql_path, predict_sql_path, client):
                 numerical_transformer,
                 numerical_features,
             ),
-            ("preprocess categorical features", OneHotEncoder(handle_unknown='ignore'), categorical_features),
+            (
+                "preprocess categorical features",
+                OneHotEncoder(handle_unknown="ignore"),
+                categorical_features,
+            ),
         ]
     )
 

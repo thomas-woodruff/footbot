@@ -15,7 +15,7 @@ def select_team(
     players,
     total_budget=1000,
     optimise_key="predicted_total_points",
-    captain_factor=2,
+    captain_factor=1,
     bench_factor=0.1,
     existing_squad_elements=None,
     transfer_penalty=4,
