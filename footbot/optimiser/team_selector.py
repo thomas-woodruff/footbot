@@ -16,6 +16,7 @@ def select_team(
     total_budget=1000,
     optimise_key="predicted_total_points",
     captain_factor=1,
+    vice_factor=0.5,
     bench_factor=0.1,
     existing_squad_elements=None,
     transfer_penalty=4,
@@ -70,12 +71,14 @@ def select_team(
     # variables for objective function
     first_team = cp.Variable(len(players), boolean=True)
     captain = cp.Variable(len(players), boolean=True)
+    vice = cp.Variable(len(players), boolean=True)
     bench = cp.Variable(len(players), boolean=True)
 
     # objective function (no existing squad)
     objective = (
         player_points @ first_team
         + captain_factor * player_points @ captain
+        + vice_factor * player_points @ vice
         + bench_factor * player_points @ bench
     )
 
@@ -90,6 +93,7 @@ def select_team(
         # player number constraints
         np.ones(len(players)) @ first_team == 11,
         np.ones(len(players)) @ captain == 1,
+        np.ones(len(players)) @ vice == 1,
         np.ones(len(players)) @ bench == 4,
         # selected players not on both first team and bench
         first_team + bench <= np.ones(len(players)),
@@ -121,6 +125,11 @@ def select_team(
     captain_selection = [int(round(j)) for j in captain.value]
     captain_selection_indices = [i for i, j in enumerate(captain_selection) if j == 1]
     captain_selection_elements = list(player_elements[captain_selection_indices])
+
+    vice_selection = [int(round(j)) for j in vice.value]
+    vice_selection_indices = [i for i, j in enumerate(vice_selection) if j == 1]
+    vice_selection_elements = list(player_elements[vice_selection_indices])
+
     # get bench elements
     bench_selection = [int(round(j)) for j in bench.value]
     bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
@@ -141,6 +150,7 @@ def select_team(
     return (
         first_team_selection_elements,
         captain_selection_elements,
+        vice_selection_elements,
         bench_selection_elements,
         transfers,
     )
@@ -224,6 +234,7 @@ def optimise_entry(
     (
         first_team_selection_elements,
         captain_selection_elements,
+        vice_selection_elements,
         bench_selection_elements,
         transfers,
     ) = select_team(
@@ -243,6 +254,12 @@ def optimise_entry(
     )
 
     captain = list(
+        df[df["element"].isin(captain_selection_elements)]
+        .sort_values("element_type")["safe_web_name"]
+        .values
+    )
+
+    vice = list(
         df[df["element"].isin(captain_selection_elements)]
         .sort_values("element_type")["safe_web_name"]
         .values
@@ -269,6 +286,7 @@ def optimise_entry(
     return {
         "first_team": first_team,
         "captain": captain,
+        "vice": vice,
         "bench": bench,
         "transfers_in": transfers_in,
         "transfers_out": transfers_out,
