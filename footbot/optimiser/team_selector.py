@@ -97,8 +97,12 @@ def select_team(
         np.ones(len(players)) @ bench == 4,
         # selected players not on both first team and bench
         first_team + bench <= np.ones(len(players)),
-        # first team contains captain
-        first_team - captain >= np.zeros(len(players)),
+        # squad contains captain
+        first_team + bench - captain >= np.zeros(len(players)),
+        # captain and vice different players
+        captain + vice <= np.ones(len(players)),
+        # squad contains vice
+        first_team + bench - vice >= np.zeros(len(players)),
     ]
 
     # update objective function and constraints if existing squad
@@ -260,7 +264,7 @@ def optimise_entry(
     )
 
     vice = list(
-        df[df["element"].isin(captain_selection_elements)]
+        df[df["element"].isin(vice_selection_elements)]
         .sort_values("element_type")["safe_web_name"]
         .values
     )
