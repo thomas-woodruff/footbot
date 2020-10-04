@@ -263,7 +263,7 @@ def update_predictions_route():
 
 
 @app.route("/optimise_team/<entry>")
-def optimise_team_route(entry):
+def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
 
     bootstrap_data = requests.get(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
@@ -285,7 +285,7 @@ def optimise_team_route(entry):
     private = bool(request.args.get("private", False))
 
     try:
-        return team_selector.optimise_entry(
+        return optimise_entry(
             entry,
             total_budget=total_budget,
             bench_factor=bench_factor,
