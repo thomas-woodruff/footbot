@@ -1,3 +1,4 @@
+from unittest.mock import ANY
 from unittest.mock import Mock
 
 import pytest
@@ -33,5 +34,35 @@ def test_optimise_team_route_public(flask_app):
             transfer_limit=20,
             start_event=10,
             end_event=20,
-            private=False,
+            login=None,
+            password=None,
+        )
+
+
+def test_optimise_team_route_private_bad_data(flask_app):
+    optimise_entry = Mock()
+    with flask_app.test_request_context(json={"foo": "bar"}):
+        resp, code = optimise_team_route(1234, optimise_entry=optimise_entry)
+    assert code == 400
+
+
+def test_optimise_team_route_private(flask_app):
+    optimise_entry = Mock()
+    with flask_app.test_request_context(
+        json={"login": "login", "password": "password"}
+    ):
+        assert (
+            optimise_team_route(1234, optimise_entry=optimise_entry)
+            == optimise_entry.return_value
+        )
+        optimise_entry.assert_called_once_with(
+            1234,
+            total_budget=ANY,
+            bench_factor=ANY,
+            transfer_penalty=ANY,
+            transfer_limit=ANY,
+            start_event=ANY,
+            end_event=ANY,
+            login="login",
+            password="password",
         )
