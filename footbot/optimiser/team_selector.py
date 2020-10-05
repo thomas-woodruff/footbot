@@ -226,7 +226,9 @@ def optimise_entry(
 
         existing_squad_elements = list(private_df["element"].values)
 
-        total_budget = private_df["selling_price"].sum()
+        total_budget = (
+            private_df["selling_price"].sum() + private_data["transfers"]["bank"]
+        )
 
         df = df.join(private_df.set_index("element"), on="element")
         df["value"] = df["selling_price"].fillna(df["value"])
