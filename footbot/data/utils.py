@@ -59,12 +59,9 @@ def set_up_bigquery(secrets_path="./secrets/service_account.json"):
 
 
 def run_query(sql, client):
-    """run BigQuery SQL and return dataframe"""
-    try:
-        bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient()
-        return client.query(sql).to_dataframe(bqstorage_client=bqstorage_client)
-    except Exception as e:
-        print(e)
+    """run bigquery sql and return dataframe"""
+    bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient()
+    return client.query(sql).to_dataframe(bqstorage_client=bqstorage_client)
 
 
 def run_templated_query(sql_file, replacement_dict, client):
