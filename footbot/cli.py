@@ -1,13 +1,17 @@
 import logging
+from pathlib import Path
 from pprint import pprint
 from typing import Optional
 
 import click
 
+from .data.utils import run_query
+from .data.utils import set_up_bigquery
 from .main import app
 from .optimiser.team_selector import optimise_entry
 
 root = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -55,3 +59,25 @@ def optimise(
     )
 
     click.echo(pprint(team_data))
+
+
+@cli.command()
+@click.argument("table_name", type=str, nargs=1)
+@click.option("--output-directory", type=Path, default=None)
+@click.option("--limit", type=int, default=None)
+def dump(table_name: str, output_directory: Path, limit: int):
+    logger.debug(f"Dumping {table_name} to {output_directory}")
+    if output_directory is None:
+        output_directory = Path(__file__).parent.parent / "dumps"
+    output_directory.mkdir(parents=True, exist_ok=True)
+    client = set_up_bigquery()
+    query = f"""
+        SELECT
+            *
+        FROM
+            `footbot-001.fpl.{table_name}`
+    """ + (
+        f" LIMIT {limit}" if limit else ""
+    )
+    df = run_query(query, client)
+    df.to_pickle(output_directory / f"{table_name}.pkl")
