@@ -14,11 +14,10 @@ def get_player_value(element_all, element_data_df):
 
     try:
         value = element_data_df.loc[
-            element_data_df['element_all'] == element_all,
-            'value'
+            element_data_df["element_all"] == element_all, "value"
         ].iloc[0]
     except IndexError:
-        raise Exception('Player missing from `element_data_df`')
+        raise Exception("Player missing from `element_data_df`")
 
     return value
 
@@ -37,8 +36,7 @@ def update_player_value(element_all, updated_value, element_data_df):
     get_player_value(element_all, element_data_df)
 
     element_data_df.loc[
-        element_data_df['element_all'] == element_all,
-        'value'
+        element_data_df["element_all"] == element_all, "value"
     ] = updated_value
 
 
@@ -60,7 +58,7 @@ def calculate_selling_price(purchase_price, current_price):
     if current_price <= purchase_price:
         return current_price
     else:
-        selling_price_change = np.floor((current_price - purchase_price)/2)
+        selling_price_change = np.floor((current_price - purchase_price) / 2)
         return purchase_price + selling_price_change
 
 
@@ -68,8 +66,10 @@ def update_purchase_prices(squad, purchase_price_dict, element_data_df):
     """
     Update the purchase price dictionary to reflect changes in squad.
 
-    When new players are added to the squad, we add their purchase price to the purchase price dictionary.
-    When existing players are dropped from the squad, we drop them from purchase the price dictionary.
+    When new players are added to the squad, we add their purchase price to the purchase price
+    dictionary.
+    When existing players are dropped from the squad, we drop them from purchase the price
+    dictionary.
 
     :param squad: List of season-agnostic identifiers (`element_all`) for players in the squad
     :param purchase_price_dict: Dictionary of purchase prices of players in the squad

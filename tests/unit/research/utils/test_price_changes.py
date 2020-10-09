@@ -1,31 +1,34 @@
 import pandas as pd
 import pytest
-from footbot.research.utils.price_changes import get_player_value, update_player_value, calculate_selling_price, update_purchase_prices, update_player_values_with_selling_prices
+
+from footbot.research.utils.price_changes import calculate_selling_price
+from footbot.research.utils.price_changes import get_player_value
+from footbot.research.utils.price_changes import update_player_value
+from footbot.research.utils.price_changes import (
+    update_player_values_with_selling_prices,
+)
+from footbot.research.utils.price_changes import update_purchase_prices
 
 
 def test_get_player_value():
-    element_data_df = pd.DataFrame([
-        {'element_all': 1, 'value': 45}
-    ])
+    element_data_df = pd.DataFrame([{"element_all": 1, "value": 45}])
 
     assert get_player_value(1, element_data_df) == 45
 
     with pytest.raises(Exception) as e:
         get_player_value(2, element_data_df)
-    assert 'Player missing from `element_data_df`' in str(e.value)
+    assert "Player missing from `element_data_df`" in str(e.value)
 
 
 def test_update_player_value():
-    element_data_df = pd.DataFrame([
-        {'element_all': 1, 'value': 45}
-    ])
+    element_data_df = pd.DataFrame([{"element_all": 1, "value": 45}])
 
     update_player_value(1, 46, element_data_df)
     assert get_player_value(1, element_data_df) == 46
 
     with pytest.raises(Exception) as e:
         update_player_value(2, 40, element_data_df)
-    assert 'Player missing from `element_data_df`' in str(e.value)
+    assert "Player missing from `element_data_df`" in str(e.value)
 
 
 def test_calculate_selling_price():
@@ -46,11 +49,13 @@ def test_update_purchase_prices():
     }
     squad = [1, 3]
 
-    element_data_df = pd.DataFrame([
-        {'element_all': 1, 'value': 45},
-        {'element_all': 2, 'value': 50},
-        {'element_all': 3, 'value': 60}
-    ])
+    element_data_df = pd.DataFrame(
+        [
+            {"element_all": 1, "value": 45},
+            {"element_all": 2, "value": 50},
+            {"element_all": 3, "value": 60},
+        ]
+    )
 
     update_purchase_prices(squad, purchase_price_dict, element_data_df)
 
@@ -64,13 +69,10 @@ def test_update_purchase_prices():
 
 
 def test_update_player_values_with_selling_prices():
-    purchase_price_dict = {
-        1: 40
-    }
-    element_data_df = pd.DataFrame([
-        {'element_all': 1, 'value': 45},
-        {'element_all': 2, 'value': 50}
-    ])
+    purchase_price_dict = {1: 40}
+    element_data_df = pd.DataFrame(
+        [{"element_all": 1, "value": 45}, {"element_all": 2, "value": 50}]
+    )
 
     update_player_values_with_selling_prices(element_data_df, purchase_price_dict)
 
