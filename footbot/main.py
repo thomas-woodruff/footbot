@@ -262,12 +262,22 @@ def update_predictions_route():
     return "predictions updated"
 
 
-@app.route("/optimise_team/<entry>")
-def optimise_team_route(entry):
+@app.route("/optimise_team/<entry>", methods=["GET", "POST"])
+def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
 
     bootstrap_data = requests.get(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
     ).json()
+
+    login = password = None
+    try:
+        data = request.json
+        login = data["login"]
+        password = data["password"]
+    except TypeError:
+        pass
+    except KeyError:
+        return "Data must contain 'login' and 'password'", 400
 
     # if no events are current, current event is zero
     # season has yet to start
@@ -282,10 +292,9 @@ def optimise_team_route(entry):
     transfer_limit = int(request.args.get("transfer_limit", 15))
     start_event = int(request.args.get("start_event", current_event + 1))
     end_event = int(request.args.get("end_event", current_event + 1))
-    private = bool(request.args.get("private", False))
 
     try:
-        return team_selector.optimise_entry(
+        return optimise_entry(
             entry,
             total_budget=total_budget,
             bench_factor=bench_factor,
@@ -293,7 +302,8 @@ def optimise_team_route(entry):
             transfer_limit=transfer_limit,
             start_event=start_event,
             end_event=end_event,
-            private=private,
+            login=login,
+            password=password,
         )
     except Exception as e:
         logger.error(e)

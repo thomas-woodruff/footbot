@@ -1,4 +1,3 @@
-import json
 import logging
 
 import cvxpy as cp
@@ -168,7 +167,8 @@ def optimise_entry(
     transfer_limit=15,
     start_event=1,
     end_event=38,
-    private=False,
+    login=None,
+    password=None,
 ):
     """
     optimise a given entry based on their picks
@@ -204,17 +204,16 @@ def optimise_entry(
         sql.format(start_event=start_event, end_event=end_event), client
     )
 
-    if private:
+    if login and password:
         session = requests.session()
-
-        with open("./secrets/fpl_login.json") as secrets_file:
-            secrets = json.loads(secrets_file.read())
 
         payload = {
             "redirect_uri": "https://fantasy.premierleague.com/a/login",
             "app": "plfpl-web",
+            "login": login,
+            "password": password,
         }
-        payload.update(secrets)
+
         logger.info("authenticating for entry")
         session.post("https://users.premierleague.com/accounts/login/", data=payload)
 
