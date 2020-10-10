@@ -101,3 +101,15 @@ def update_player_values_with_selling_prices(element_data_df, purchase_price_dic
         current_price = get_player_value(element_all, element_data_df)
         selling_price = calculate_selling_price(purchase_price, current_price)
         update_player_value(element_all, selling_price, element_data_df)
+
+
+def calculate_team_value(squad, element_data_df):
+    """
+    Calculate the total value of a squad of players.
+
+    :param squad: List of season-agnostic identifiers (`element_all`) for players in the squad
+    :param element_data_df: Dataframe including values of all players
+    :return: Sum of player values for the squad
+    """
+
+    return np.sum([get_player_value(e, element_data_df) for e in squad])

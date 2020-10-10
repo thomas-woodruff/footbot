@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from footbot.research.utils.price_changes import calculate_selling_price
+from footbot.research.utils.price_changes import calculate_team_value
 from footbot.research.utils.price_changes import get_player_value
 from footbot.research.utils.price_changes import update_player_value
 from footbot.research.utils.price_changes import (
@@ -80,3 +81,15 @@ def test_update_player_values_with_selling_prices():
     assert get_player_value(1, element_data_df) == 42
     # current price for player not in squad
     assert get_player_value(2, element_data_df) == 50
+
+
+def test_calculate_team_value():
+    squad = [1, 2]
+
+    element_data_df = pd.DataFrame([
+        {'element_all': 1, 'value': 40},
+        {'element_all': 2, 'value': 50},
+        {'element_all': 3, 'value': 60},
+    ])
+
+    assert calculate_team_value(squad, element_data_df) == 90
