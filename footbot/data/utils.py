@@ -65,18 +65,17 @@ def run_query(sql, client):
         print(e)
 
 
-def run_templated_query(sql_file, replacement_dict):
+def run_templated_query(sql_file, replacement_dict, client):
     """
     Run a templated SQL query with specified replacements.
 
     :param sql_file: Filename of SQL query
     :param replacement_dict: Dictionary of parameters to replace in template
+    :param client: BigQuery client
     :return: Dataframe of query results
     """
     with open(sql_file, "r") as sql_file:
         sql = sql_file.read()
-
-    client = set_up_bigquery()
 
     df = run_query(sql.format(**replacement_dict), client)
 
@@ -151,12 +150,24 @@ def check_next_event_deadlinetime():
     return deadlinetime < datetime.datetime.now() + datetime.timedelta(hours=24)
 
 
-def get_current_event():
-    logger.info("getting current event")
-    bootstrap_request = requests.get(
-        "https://fantasy.premierleague.com/api/bootstrap-static/"
-    )
-    bootstrap_data = bootstrap_request.json()
+def get_current_event(bootstrap_data=None):
+    """
+    Get the event number of the current gameweek.
+    The event number increments at the start of each gameweek.
+
+    If bootstrap data is not provided, we get it from the API.
+    If the season has yet to start, this is 0.
+
+    :param bootstrap_data: Data from `bootstrap-static` endpoint
+    :return: Current event number
+    """
+
+    if not bootstrap_data:
+        logger.info("getting current event")
+        bootstrap_request = requests.get(
+            "https://fantasy.premierleague.com/api/bootstrap-static/"
+        )
+        bootstrap_data = bootstrap_request.json()
 
     # if no events are current, current event is zero
     # season has yet to start

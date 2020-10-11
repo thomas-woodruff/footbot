@@ -15,12 +15,7 @@ def get_bootstrap():
 def get_element_df(bootstrap_data):
     """get contemporaneous element data"""
 
-    # if no events are current, current event is zero
-    # season has yet to start
-    current_event = 0
-    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
-        # otherwise, take event id of event that is current
-        current_event = event["id"]
+    current_event = utils.get_current_event(bootstrap_data)
 
     current_datetime = datetime.datetime.now()
 

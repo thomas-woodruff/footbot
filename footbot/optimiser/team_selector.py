@@ -6,6 +6,7 @@ import requests
 
 from footbot.data.utils import get_current_event
 from footbot.data.utils import run_templated_query
+from footbot.data.utils import set_up_bigquery
 
 logger = logging.getLogger(__name__)
 
@@ -336,9 +337,11 @@ def optimise_entry(
     """
 
     logger.info("getting predictions")
+    client = set_up_bigquery()
     players = run_templated_query(
         "./footbot/optimiser/sql/optimiser.sql",
         dict(start_event=start_event, end_event=end_event),
+        client,
     ).to_dict("records")
 
     if login and password:
