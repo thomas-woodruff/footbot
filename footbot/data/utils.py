@@ -51,13 +51,15 @@ def set_up_tasks(secrets_path="./secrets/service_account.json"):
 
 
 def set_up_bigquery(secrets_path="./secrets/service_account.json"):
-    """set up bigquery client"""
+    """set up BigQuery client"""
+
+    logger.info("setting up BigQuery client")
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = secrets_path
     return bigquery.Client()
 
 
 def run_query(sql, client):
-    """run bigquery sql and return dataframe"""
+    """run BigQuery SQL and return dataframe"""
     try:
         bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient()
         return client.query(sql).to_dataframe(bqstorage_client=bqstorage_client)
@@ -83,7 +85,7 @@ def run_templated_query(sql_file, replacement_dict, client):
 
 
 def write_to_table(dataset, table, df, client, write_disposition="WRITE_APPEND"):
-    """write data to bigquery table"""
+    """write data to BigQuery table"""
     try:
         string_buffer = StringIO()
         bytes_buffer = BytesIO()

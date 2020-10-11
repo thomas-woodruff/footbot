@@ -239,7 +239,6 @@ def update_entry_picks_chips_entry_route_put(entry):
 
 @app.route("/update_predictions")
 def update_predictions_route():
-    logger.info("setting up big query client")
     client = utils.set_up_bigquery()
 
     predict_df = train_predict.get_predicted_points_df(
