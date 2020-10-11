@@ -4,7 +4,12 @@ from unittest.mock import Mock
 import pytest
 
 from footbot.main import app
+from footbot.main import home_route
 from footbot.main import optimise_team_route
+
+
+def test_home_route():
+    assert "Greetings" in home_route()
 
 
 @pytest.fixture

@@ -10,151 +10,224 @@ from footbot.data import utils
 logger = logging.getLogger(__name__)
 
 
-def select_team(
-    players,
-    total_budget=1000,
-    optimise_key="predicted_total_points",
-    captain_factor=1,
-    vice_factor=0.5,
-    bench_factor=0.1,
-    existing_squad_elements=None,
-    transfer_penalty=4,
-    transfer_limit=15,
+def get_elements_from_vector(vector, player_elements):
+    """
+    Convert array of indicators into array of player identifiers.
+
+    :param vector: An array containing an indicator for every player
+    :param player_elements: An array containing an identifier for every player
+    :return: An array containing only elements where corresponding indicator is on
+    """
+
+    if any([v not in [0.0, 1.0] for v in vector]):
+        raise Exception("Vector contains values other than 0. and 1.")
+
+    if len(vector) != len(player_elements):
+        raise Exception("`vector` and `player_elements` are different lengths")
+
+    return [e for e, v in zip(player_elements, vector) if v]
+
+
+def validate_optimisation_arguments(
+    total_budget,
+    first_team_factor,
+    bench_factor,
+    captain_factor,
+    vice_factor,
+    existing_squad,
+    transfer_penalty,
+    transfer_limit,
 ):
     """
-    solve team selection from scratch
-    players is an array of dicts
+    Validate arguments passed to optimiser.
+
+    :param total_budget: Total budget available, i.e. total team value + bank
+    :param first_team_factor: The probability a player on the first team will play
+    :param bench_factor: The probability a player on the bench will play
+    :param captain_factor: The probability the captain will play
+    :param vice_factor: The probability the captain will not play
+    :param existing_squad: An array of player identifiers for the existing squad.
+    :param transfer_penalty: The cost in points of transferring a player
+    :param transfer_limit: The limit to the number of transfers that can be made
+    :return:
     """
+    if total_budget <= 0:
+        raise Exception("`total_budget` must be positive")
 
-    # munge player data
-    player_elements = np.array([i["element"] for i in players])
-    player_points = np.array([i[optimise_key] for i in players])
-    player_costs = np.array([[i["value"] for i in players]])
-    player_position = np.array([i["element_type"] for i in players])
-    player_club = np.array([i["team"] for i in players])
+    if first_team_factor + bench_factor != 1.0:
+        raise Exception("`first_team_factor` and `bench_factor` must sum to 1.")
 
-    if existing_squad_elements:
-        existing_squad = np.array(
-            [1 if i in existing_squad_elements else 0 for i in player_elements]
+    if captain_factor + vice_factor != 1.0:
+        raise Exception("`captain_factor` and `vice_factor` must sum to 1.")
+
+    if (not existing_squad and existing_squad != []) or (
+        existing_squad and len(existing_squad) != 15
+    ):
+        raise Exception(
+            "`existing_squad` must consist of 15 players or be an empty array"
         )
 
-        if sum(existing_squad) != 15:
-            raise Exception
+    if transfer_penalty < 0:
+        raise Exception("`transfer_penalty` must be non-negative")
 
-    # weight matrix for player positions
+    if transfer_limit not in range(0, 16):
+        raise Exception("`transfer_limit` must be an integer between 0 and 15")
+
+
+def construct_player_position_weights(players):
+    """
+    Construct a matrix indicating which players are in which positions.
+    The matrix consists of a row for each position (4) and a column for each player.
+    If a player occupies a position, the corresponding element is 1, otherwise 0.
+
+    :param players: An array of dictionaries of player data
+    :return: Matrix of player weights
+    """
+
     player_position_weights = np.zeros((4, len(players)))
-    for i in range(0, 4):
-        for j in range(0, len(players)):
-            if player_position[j] == i + 1:
+
+    for i, element_type in enumerate(range(1, 5)):
+        for j, player in enumerate(players):
+            if player["element_type"] == element_type:
                 player_position_weights[i, j] = 1
             else:
                 player_position_weights[i, j] = 0
 
-    # weight matrix for player clubs
-    player_club_weights = np.zeros((20, len(players)))
-    for i in range(0, 20):
-        for j in range(0, len(players)):
-            if player_club[j] == i + 1:
-                player_club_weights[i, j] = 1
+    return player_position_weights
+
+
+def construct_player_team_weights(players):
+    """
+    Construct a matrix indicating which players belong to which teams.
+    The matrix consists of a row for each team (20) and a column for each player.
+    If a player belongs to a team, the corresponding element is 1, otherwise 0.
+
+    :param players: An array of dictionaries of player data
+    :return: Matrix of player weights
+    """
+
+    player_team_weights = np.zeros((20, len(players)))
+
+    for i, element_type in enumerate(range(1, 21)):
+        for j, player in enumerate(players):
+            if player["team"] == element_type:
+                player_team_weights[i, j] = 1
             else:
-                player_club_weights[i, j] = 0
+                player_team_weights[i, j] = 0
 
-    # overall weight matrix
-    player_weights = np.concatenate((player_costs, player_club_weights), axis=0)
+    return player_team_weights
 
-    # capacity vector
-    squad_cost_capacity = [total_budget]
-    squad_club_capacity = [3] * 20
-    squad_capacity = np.array(squad_cost_capacity + squad_club_capacity)
 
-    # variables for objective function
-    first_team = cp.Variable(len(players), boolean=True)
-    captain = cp.Variable(len(players), boolean=True)
-    vice = cp.Variable(len(players), boolean=True)
-    bench = cp.Variable(len(players), boolean=True)
+def select_team(
+    players,
+    total_budget=1000,
+    optimise_key="predicted_total_points",
+    first_team_factor=0.9,
+    bench_factor=0.1,
+    captain_factor=0.9,
+    vice_factor=0.1,
+    existing_squad=[],
+    transfer_penalty=4,
+    transfer_limit=15,
+):
+    """
+    Select the optimal team of players within constraints.
 
-    # objective function (no existing squad)
-    objective = (
-        player_points @ first_team
-        + captain_factor * player_points @ captain
-        + vice_factor * player_points @ vice
-        + bench_factor * player_points @ bench
+    :param players: An array of dictionaries of player data
+    :param total_budget: Total budget available, i.e. total team value + bank
+    :param optimise_key: The variable to optimise for
+    :param first_team_factor: The probability a player on the first team will play
+    :param bench_factor: The probability a player on the bench will play
+    :param captain_factor: The probability the captain will play
+    :param vice_factor: The probability the captain will not play
+    :param existing_squad: An array of player identifiers for the existing squad.
+    :param transfer_penalty: The cost in points of transferring a player
+    :param transfer_limit: The limit to the number of transfers that can be made
+    :return:
+    """
+
+    validate_optimisation_arguments(
+        total_budget,
+        first_team_factor,
+        bench_factor,
+        captain_factor,
+        vice_factor,
+        existing_squad,
+        transfer_penalty,
+        transfer_limit,
     )
 
-    # optimisation constraints (no existing squad)
+    player_elements = np.array([i["element"] for i in players])
+    player_points = np.array([i[optimise_key] for i in players])
+    player_costs = np.array([[i["value"] for i in players]])
+
+    player_position_weights = construct_player_position_weights(players)
+    player_team_weights = construct_player_team_weights(players)
+
+    # vector variables for objective function
+    first_team_v = cp.Variable(len(players), boolean=True)
+    captain_v = cp.Variable(len(players), boolean=True)
+    vice_v = cp.Variable(len(players), boolean=True)
+    bench_v = cp.Variable(len(players), boolean=True)
+    # existing squad is not a variable that we choose
+    # it is a vector of constants we provide
+    existing_squad_v = np.array(
+        [1.0 if i in existing_squad else 0.0 for i in player_elements]
+    )
+    num_transfers_v = 15 - existing_squad_v @ (first_team_v + bench_v)
+
+    objective = (
+        first_team_factor * player_points @ first_team_v
+        + bench_factor * player_points @ bench_v
+        + captain_factor * player_points @ captain_v
+        + vice_factor * player_points @ vice_v
+        - transfer_penalty * num_transfers_v
+    )
+
     constraints = [
-        # cost and club constraints
-        player_weights @ (first_team + bench) <= squad_capacity,
+        # cost constraint
+        player_costs @ (first_team_v + bench_v) <= [total_budget],
+        # team constraints
+        player_team_weights @ (first_team_v + bench_v) <= [3] * 20,
         # position constraints
-        player_position_weights @ (first_team + bench) == [2, 5, 5, 3],
-        player_position_weights @ first_team >= [1, 3, 3, 1],
-        player_position_weights @ first_team <= [1, 5, 5, 3],
+        player_position_weights @ (first_team_v + bench_v) == [2, 5, 5, 3],
+        player_position_weights @ first_team_v >= [1, 3, 3, 1],
+        player_position_weights @ first_team_v <= [1, 5, 5, 3],
         # player number constraints
-        np.ones(len(players)) @ first_team == 11,
-        np.ones(len(players)) @ captain == 1,
-        np.ones(len(players)) @ vice == 1,
-        np.ones(len(players)) @ bench == 4,
+        np.ones(len(players)) @ first_team_v == 11,
+        np.ones(len(players)) @ captain_v == 1,
+        np.ones(len(players)) @ vice_v == 1,
+        np.ones(len(players)) @ bench_v == 4,
         # selected players not on both first team and bench
-        first_team + bench <= np.ones(len(players)),
-        # squad contains captain
-        first_team + bench - captain >= np.zeros(len(players)),
+        first_team_v + bench_v <= np.ones(len(players)),
         # captain and vice different players
-        captain + vice <= np.ones(len(players)),
+        captain_v + vice_v <= np.ones(len(players)),
+        # squad contains captain
+        first_team_v + bench_v - captain_v >= np.zeros(len(players)),
         # squad contains vice
-        first_team + bench - vice >= np.zeros(len(players)),
+        first_team_v + bench_v - vice_v >= np.zeros(len(players)),
+        # number of transfers must not exceed limit
+        num_transfers_v <= transfer_limit,
     ]
-
-    # update objective function and constraints if existing squad
-    if existing_squad_elements:
-        objective = objective - transfer_penalty * (
-            15 - existing_squad @ (first_team + bench)
-        )
-
-        constraints.append(15 - existing_squad @ (first_team + bench) <= transfer_limit)
 
     # optimisation problem
     squad_prob = cp.Problem(cp.Maximize(objective), constraints)
-
-    # solve optimisation problem
     squad_prob.solve(solver="GLPK_MI")
 
-    # get first team elements
-    first_team_selection = [int(round(j)) for j in first_team.value]
-    first_team_selection_indices = [
-        i for i, j in enumerate(first_team_selection) if j == 1
-    ]
-    first_team_selection_elements = list(player_elements[first_team_selection_indices])
-    # get captain element
-    captain_selection = [int(round(j)) for j in captain.value]
-    captain_selection_indices = [i for i, j in enumerate(captain_selection) if j == 1]
-    captain_selection_elements = list(player_elements[captain_selection_indices])
-
-    vice_selection = [int(round(j)) for j in vice.value]
-    vice_selection_indices = [i for i, j in enumerate(vice_selection) if j == 1]
-    vice_selection_elements = list(player_elements[vice_selection_indices])
-
-    # get bench elements
-    bench_selection = [int(round(j)) for j in bench.value]
-    bench_selection_indices = [i for i, j in enumerate(bench_selection) if j == 1]
-    bench_selection_elements = list(player_elements[bench_selection_indices])
-
-    if existing_squad_elements:
-        transfers = {
-            "transfers_in": set(
-                first_team_selection_elements + bench_selection_elements
-            )
-            - set(existing_squad_elements),
-            "transfers_out": set(existing_squad_elements)
-            - set(first_team_selection_elements + bench_selection_elements),
-        }
-    else:
-        transfers = {"transfers_in": set(), "transfers_out": set()}
+    first_team = get_elements_from_vector(first_team_v.value, player_elements)
+    bench = get_elements_from_vector(bench_v.value, player_elements)
+    captain = get_elements_from_vector(captain_v.value, player_elements)
+    vice = get_elements_from_vector(vice_v.value, player_elements)
+    transfers = {
+        "transfers_in": set(first_team + bench) - set(existing_squad),
+        "transfers_out": set(existing_squad) - set(first_team + bench),
+    }
 
     return (
-        first_team_selection_elements,
-        captain_selection_elements,
-        vice_selection_elements,
-        bench_selection_elements,
+        first_team,
+        bench,
+        captain,
+        vice,
         transfers,
     )
 
@@ -193,7 +266,7 @@ def optimise_entry(
         f"https://fantasy.premierleague.com/api/entry/{entry}/event/{current_event}/picks/"
     )
     entry_data = entry_request.json()
-    existing_squad_elements = [i["element"] for i in entry_data["picks"]]
+    existing_squad = [i["element"] for i in entry_data["picks"]]
 
     with open("./footbot/optimiser/sql/optimiser.sql", "r") as sql_file:
         sql = sql_file.read()
@@ -223,7 +296,7 @@ def optimise_entry(
         ).json()
         private_df = pd.DataFrame(private_data["picks"])[["element", "selling_price"]]
 
-        existing_squad_elements = list(private_df["element"].values)
+        existing_squad = list(private_df["element"].values)
 
         total_budget = (
             private_df["selling_price"].sum() + private_data["transfers"]["bank"]
@@ -249,7 +322,7 @@ def optimise_entry(
         bench_factor=bench_factor,
         transfer_penalty=transfer_penalty,
         transfer_limit=transfer_limit,
-        existing_squad_elements=existing_squad_elements,
+        existing_squad=existing_squad,
     )
 
     first_team = list(
