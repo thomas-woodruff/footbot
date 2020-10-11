@@ -4,6 +4,7 @@ import pytest
 from footbot.optimiser.team_selector import construct_player_position_weights
 from footbot.optimiser.team_selector import construct_player_team_weights
 from footbot.optimiser.team_selector import get_elements_from_vector
+from footbot.optimiser.team_selector import get_sorted_safe_web_names
 from footbot.optimiser.team_selector import select_team
 from footbot.optimiser.team_selector import validate_optimisation_arguments
 
@@ -70,35 +71,175 @@ def test_validate_optimisation_arguments():
 
 
 keepers = [
-    {"element": 1, "key": 4, "value": 40, "element_type": 1, "team": 1},
-    {"element": 2, "key": 5, "value": 40, "element_type": 1, "team": 2},
-    {"element": 3, "key": 6, "value": 40, "element_type": 1, "team": 3},
+    {
+        "element": 1,
+        "key": 4,
+        "value": 40,
+        "element_type": 1,
+        "team": 1,
+        "safe_web_name": "alex",
+    },
+    {
+        "element": 2,
+        "key": 5,
+        "value": 40,
+        "element_type": 1,
+        "team": 2,
+        "safe_web_name": "ben",
+    },
+    {
+        "element": 3,
+        "key": 6,
+        "value": 40,
+        "element_type": 1,
+        "team": 3,
+        "safe_web_name": "carl",
+    },
 ]
 
 defenders = [
-    {"element": 4, "key": 4, "value": 40, "element_type": 2, "team": 4},
-    {"element": 5, "key": 5, "value": 40, "element_type": 2, "team": 5},
-    {"element": 6, "key": 5, "value": 40, "element_type": 2, "team": 6},
-    {"element": 7, "key": 6, "value": 40, "element_type": 2, "team": 7},
-    {"element": 8, "key": 6, "value": 40, "element_type": 2, "team": 8},
-    {"element": 9, "key": 6, "value": 40, "element_type": 2, "team": 9},
+    {
+        "element": 4,
+        "key": 4,
+        "value": 40,
+        "element_type": 2,
+        "team": 4,
+        "safe_web_name": "dan",
+    },
+    {
+        "element": 5,
+        "key": 5,
+        "value": 40,
+        "element_type": 2,
+        "team": 5,
+        "safe_web_name": "ed",
+    },
+    {
+        "element": 6,
+        "key": 5,
+        "value": 40,
+        "element_type": 2,
+        "team": 6,
+        "safe_web_name": "fred",
+    },
+    {
+        "element": 7,
+        "key": 6,
+        "value": 40,
+        "element_type": 2,
+        "team": 7,
+        "safe_web_name": "george",
+    },
+    {
+        "element": 8,
+        "key": 6,
+        "value": 40,
+        "element_type": 2,
+        "team": 8,
+        "safe_web_name": "hugh",
+    },
+    {
+        "element": 9,
+        "key": 6,
+        "value": 40,
+        "element_type": 2,
+        "team": 9,
+        "safe_web_name": "ira",
+    },
 ]
 
 midfielders = [
-    {"element": 10, "key": 4, "value": 40, "element_type": 3, "team": 10},
-    {"element": 11, "key": 5, "value": 40, "element_type": 3, "team": 11},
-    {"element": 12, "key": 6, "value": 40, "element_type": 3, "team": 12},
-    {"element": 13, "key": 6, "value": 40, "element_type": 3, "team": 13},
-    {"element": 14, "key": 6, "value": 40, "element_type": 3, "team": 14},
-    {"element": 15, "key": 6, "value": 40, "element_type": 3, "team": 15},
+    {
+        "element": 10,
+        "key": 4,
+        "value": 40,
+        "element_type": 3,
+        "team": 10,
+        "safe_web_name": "jack",
+    },
+    {
+        "element": 11,
+        "key": 5,
+        "value": 40,
+        "element_type": 3,
+        "team": 11,
+        "safe_web_name": "kane",
+    },
+    {
+        "element": 12,
+        "key": 6,
+        "value": 40,
+        "element_type": 3,
+        "team": 12,
+        "safe_web_name": "lee",
+    },
+    {
+        "element": 13,
+        "key": 6,
+        "value": 40,
+        "element_type": 3,
+        "team": 13,
+        "safe_web_name": "matt",
+    },
+    {
+        "element": 14,
+        "key": 6,
+        "value": 40,
+        "element_type": 3,
+        "team": 14,
+        "safe_web_name": "nick",
+    },
+    {
+        "element": 15,
+        "key": 6,
+        "value": 40,
+        "element_type": 3,
+        "team": 15,
+        "safe_web_name": "oli",
+    },
 ]
 
 forwards = [
-    {"element": 16, "key": 4, "value": 40, "element_type": 4, "team": 16},
-    {"element": 17, "key": 6, "value": 40, "element_type": 4, "team": 17},
-    {"element": 18, "key": 6.5, "value": 40, "element_type": 4, "team": 18},
-    {"element": 19, "key": 7, "value": 40, "element_type": 4, "team": 19},
-    {"element": 20, "key": 3, "value": 40, "element_type": 4, "team": 20},
+    {
+        "element": 16,
+        "key": 4,
+        "value": 40,
+        "element_type": 4,
+        "team": 16,
+        "safe_web_name": "pete",
+    },
+    {
+        "element": 17,
+        "key": 6,
+        "value": 40,
+        "element_type": 4,
+        "team": 17,
+        "safe_web_name": "quinn",
+    },
+    {
+        "element": 18,
+        "key": 6.5,
+        "value": 40,
+        "element_type": 4,
+        "team": 18,
+        "safe_web_name": "rich",
+    },
+    {
+        "element": 19,
+        "key": 7,
+        "value": 40,
+        "element_type": 4,
+        "team": 19,
+        "safe_web_name": "sid",
+    },
+    {
+        "element": 20,
+        "key": 3,
+        "value": 40,
+        "element_type": 4,
+        "team": 20,
+        "safe_web_name": "tom",
+    },
 ]
 
 players = keepers + defenders + midfielders + forwards
@@ -210,7 +351,7 @@ def test_construct_player_team_matrix():
 def test_select_team_from_scratch():
 
     first_team, bench, captain, vice, transfers = select_team(
-        players, total_budget=600, optimise_key="key", transfer_penalty=0
+        players, optimise_key="key", total_budget=600, transfer_penalty=0
     )
 
     assert set(first_team) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19}
@@ -227,9 +368,9 @@ def test_select_team_from_existing():
 
     first_team, bench, captain, vice, transfers = select_team(
         players,
-        total_budget=600,
         optimise_key="key",
         existing_squad=[1, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
+        total_budget=600,
         transfer_penalty=0,
     )
 
@@ -244,9 +385,9 @@ def test_select_team_transfer_penalty():
     squad = [2, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 1, 5, 6, 11]
 
     kwargs = dict(
-        total_budget=600,
         optimise_key="key",
         existing_squad=squad,
+        total_budget=600,
         first_team_factor=1,
         bench_factor=0,
         captain_factor=1,
@@ -270,8 +411,8 @@ def test_select_team_transfer_limit():
 
     first_team, bench, captain, vice, transfers = select_team(
         players,
-        total_budget=600,
         optimise_key="key",
+        total_budget=600,
         existing_squad=squad,
         transfer_penalty=0,
         transfer_limit=0,
@@ -285,9 +426,9 @@ def test_select_team_transfer_limit():
 
     first_team, bench, captain, vice, transfers = select_team(
         players,
-        total_budget=600,
         optimise_key="key",
         existing_squad=squad,
+        total_budget=600,
         transfer_penalty=0,
         transfer_limit=1,
     )
@@ -308,9 +449,9 @@ def test_select_team_budget_constraint():
 
     first_team, bench, captain, vice, transfers = select_team(
         players_edit,
-        total_budget=600,
         optimise_key="key",
         existing_squad=[3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
+        total_budget=600,
         transfer_penalty=0,
     )
 
@@ -329,10 +470,20 @@ def test_select_team_team_constraint():
             player["team"] = 3
 
     first_team, bench, captain, vice, transfers = select_team(
-        players_edit, total_budget=600, optimise_key="key", transfer_penalty=0
+        players_edit, optimise_key="key", total_budget=600, transfer_penalty=0
     )
 
     assert set(first_team) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19}
     assert set(bench) == {1, 5, 6, 11}
     assert set(captain) == {19}
     assert set(vice) == {18}
+
+
+def test_get_sorted_safe_web_names():
+
+    assert get_sorted_safe_web_names([16, 10, 4, 1], players) == [
+        "alex",
+        "dan",
+        "jack",
+        "pete",
+    ]

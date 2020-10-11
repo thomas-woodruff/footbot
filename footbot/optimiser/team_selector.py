@@ -2,10 +2,10 @@ import logging
 
 import cvxpy as cp
 import numpy as np
-import pandas as pd
 import requests
 
-from footbot.data import utils
+from footbot.data.utils import get_current_event
+from footbot.data.utils import run_templated_query
 
 logger = logging.getLogger(__name__)
 
@@ -120,13 +120,13 @@ def construct_player_team_weights(players):
 
 def select_team(
     players,
-    total_budget=1000,
     optimise_key="predicted_total_points",
+    existing_squad=[],
+    total_budget=1000,
     first_team_factor=0.9,
     bench_factor=0.1,
     captain_factor=0.9,
     vice_factor=0.1,
-    existing_squad=[],
     transfer_penalty=4,
     transfer_limit=15,
 ):
@@ -134,13 +134,13 @@ def select_team(
     Select the optimal team of players within constraints.
 
     :param players: An array of dictionaries of player data
-    :param total_budget: Total budget available, i.e. total team value + bank
     :param optimise_key: The variable to optimise for
+    :param existing_squad: An array of player identifiers for the existing squad.
+    :param total_budget: Total budget available, i.e. total team value + bank
     :param first_team_factor: The probability a player on the first team will play
     :param bench_factor: The probability a player on the bench will play
     :param captain_factor: The probability the captain will play
     :param vice_factor: The probability the captain will not play
-    :param existing_squad: An array of player identifiers for the existing squad.
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
     :return:
@@ -210,7 +210,7 @@ def select_team(
         num_transfers_v <= transfer_limit,
     ]
 
-    # optimisation problem
+    # solve optimisation problem
     squad_prob = cp.Problem(cp.Maximize(objective), constraints)
     squad_prob.solve(solver="GLPK_MI")
 
@@ -232,10 +232,82 @@ def select_team(
     )
 
 
+def get_private_entry_data(entry, login, password):
+    """
+    Get private entry data using specified credentials.
+
+    Private entry data includes recent squad changes, players prices and bank balance.
+
+    :param entry: Team identifier
+    :param login: FPL login
+    :param password: FPL password
+    :return: Dictionary of private entry data
+    """
+
+    session = requests.session()
+
+    payload = {
+        "redirect_uri": "https://fantasy.premierleague.com/a/login",
+        "app": "plfpl-web",
+        "login": login,
+        "password": password,
+    }
+
+    logger.info("authenticating for entry")
+    session.post("https://users.premierleague.com/accounts/login/", data=payload)
+
+    logger.info("getting private entry data")
+    private_data = session.get(
+        f"https://fantasy.premierleague.com/api/my-team/{entry}"
+    ).json()
+
+    return private_data
+
+
+def get_public_entry_data(entry):
+    """
+    Get public entry data.
+
+    Public entry data does not include recent squad changes, players prices and bank balance.
+
+    :param entry: Team identifier
+    :return: Dictionary of public entry data
+    """
+
+    current_event = get_current_event()
+
+    logger.info("getting entry data")
+    entry_request = requests.get(
+        f"https://fantasy.premierleague.com/api/entry/{entry}/event/{current_event}/picks/"
+    )
+    public_data = entry_request.json()
+
+    return public_data
+
+
+def get_sorted_safe_web_names(elements, players):
+    """
+
+    :param elements: An array of elements
+    :param players: An array of dictionaries of player data
+    :return: An array of names ordered by position
+    """
+    safe_web_names = [
+        (i["safe_web_name"], i["element_type"])
+        for i in players
+        if i["element"] in elements
+    ]
+
+    return [i[0] for i in sorted(safe_web_names, key=lambda x: x[1])]
+
+
 def optimise_entry(
     entry,
     total_budget=1000,
+    first_team_factor=0.9,
     bench_factor=0.1,
+    captain_factor=0.9,
+    vice_factor=0.1,
     transfer_penalty=4,
     transfer_limit=15,
     start_event=1,
@@ -244,128 +316,74 @@ def optimise_entry(
     password=None,
 ):
     """
-    optimise a given entry based on their picks
-    for the current event
+    Select the optimal team and transfers for a specified entry.
+
+    If credentials are provided, use private entry data.
+
+    :param entry: Team identifier
+    :param total_budget: Total budget available, i.e. total team value + bank
+    :param first_team_factor: The probability a player on the first team will play
+    :param bench_factor: The probability a player on the bench will play
+    :param captain_factor: The probability the captain will play
+    :param vice_factor: The probability the captain will not play
+    :param transfer_penalty: The cost in points of transferring a player
+    :param transfer_limit: The limit to the number of transfers that can be made
+    :param start_event: Start of event range to optimiser over
+    :param end_event: End of event range to optimiser over
+    :param login: FPL login
+    :param password: FPL password
+    :return: Dictionary of team selection decisions
     """
 
-    logger.info("getting current event")
-    bootstrap_request = requests.get(
-        "https://fantasy.premierleague.com/api/bootstrap-static/"
-    )
-    bootstrap_data = bootstrap_request.json()
-
-    # if no events are current, current event is zero
-    # season has yet to start
-    current_event = 0
-    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
-        # otherwise, take event id of event that is current
-        current_event = event["id"]
-
-    logger.info("getting entry data")
-    entry_request = requests.get(
-        f"https://fantasy.premierleague.com/api/entry/{entry}/event/{current_event}/picks/"
-    )
-    entry_data = entry_request.json()
-    existing_squad = [i["element"] for i in entry_data["picks"]]
-
-    with open("./footbot/optimiser/sql/optimiser.sql", "r") as sql_file:
-        sql = sql_file.read()
-
     logger.info("getting predictions")
-    client = utils.set_up_bigquery()
-    df = utils.run_query(
-        sql.format(start_event=start_event, end_event=end_event), client
-    )
+    players = run_templated_query(
+        "./footbot/optimiser/sql/optimiser.sql",
+        dict(start_event=start_event, end_event=end_event),
+    ).to_dict("records")
 
     if login and password:
-        session = requests.session()
+        private_data = get_private_entry_data(entry, login, password)
+        existing_squad = [i["element"] for i in private_data["picks"]]
+        team_value = np.sum([i["selling_price"] for i in private_data["picks"]])
+        bank = private_data["transfers"]["bank"]
+        total_budget = team_value + bank
 
-        payload = {
-            "redirect_uri": "https://fantasy.premierleague.com/a/login",
-            "app": "plfpl-web",
-            "login": login,
-            "password": password,
-        }
+        # update player values with selling prices for players in existing squad
+        for player in players:
+            for pick in private_data["picks"]:
+                if player["element"] == pick["element"]:
+                    player["value"] = pick["selling_price"]
 
-        logger.info("authenticating for entry")
-        session.post("https://users.premierleague.com/accounts/login/", data=payload)
-
-        logger.info("getting private entry data")
-        private_data = session.get(
-            f"https://fantasy.premierleague.com/api/my-team/{entry}"
-        ).json()
-        private_df = pd.DataFrame(private_data["picks"])[["element", "selling_price"]]
-
-        existing_squad = list(private_df["element"].values)
-
-        total_budget = (
-            private_df["selling_price"].sum() + private_data["transfers"]["bank"]
-        )
-
-        df = df.join(private_df.set_index("element"), on="element")
-        df["value"] = df["selling_price"].fillna(df["value"])
-        df = df.drop("selling_price", axis=1)
-
-    players = df.to_dict("records")
+    else:
+        public_data = get_public_entry_data(entry)
+        existing_squad = [i["element"] for i in public_data["picks"]]
 
     logger.info("optimising team")
-    (
-        first_team_selection_elements,
-        captain_selection_elements,
-        vice_selection_elements,
-        bench_selection_elements,
-        transfers,
-    ) = select_team(
+    (first_team, bench, captain, vice, transfers,) = select_team(
         players,
         optimise_key="average_points",
+        existing_squad=existing_squad,
         total_budget=total_budget,
+        first_team_factor=first_team_factor,
         bench_factor=bench_factor,
+        captain_factor=captain_factor,
+        vice_factor=vice_factor,
         transfer_penalty=transfer_penalty,
         transfer_limit=transfer_limit,
-        existing_squad=existing_squad,
     )
 
-    first_team = list(
-        df[df["element"].isin(first_team_selection_elements)]
-        .sort_values("element_type")["safe_web_name"]
-        .values
-    )
-
-    captain = list(
-        df[df["element"].isin(captain_selection_elements)]
-        .sort_values("element_type")["safe_web_name"]
-        .values
-    )
-
-    vice = list(
-        df[df["element"].isin(vice_selection_elements)]
-        .sort_values("element_type")["safe_web_name"]
-        .values
-    )
-
-    bench = list(
-        df[df["element"].isin(bench_selection_elements)]
-        .sort_values("element_type")["safe_web_name"]
-        .values
-    )
-
-    transfers_in = list(
-        df[df["element"].isin(transfers["transfers_in"])]
-        .sort_values("element_type")["safe_web_name"]
-        .values
-    )
-
-    transfers_out = list(
-        df[df["element"].isin(transfers["transfers_out"])]
-        .sort_values("element_type")["safe_web_name"]
-        .values
-    )
+    first_team = get_sorted_safe_web_names(first_team, players)
+    bench = get_sorted_safe_web_names(bench, players)
+    captain = get_sorted_safe_web_names(captain, players)
+    vice = get_sorted_safe_web_names(vice, players)
+    transfers_in = get_sorted_safe_web_names(transfers["transfers_in"], players)
+    transfers_out = get_sorted_safe_web_names(transfers["transfers_out"], players)
 
     return {
         "first_team": first_team,
+        "bench": bench,
         "captain": captain,
         "vice": vice,
-        "bench": bench,
         "transfers_in": transfers_in,
         "transfers_out": transfers_out,
     }

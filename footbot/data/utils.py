@@ -65,6 +65,24 @@ def run_query(sql, client):
         print(e)
 
 
+def run_templated_query(sql_file, replacement_dict):
+    """
+    Run a templated SQL query with specified replacements.
+
+    :param sql_file: Filename of SQL query
+    :param replacement_dict: Dictionary of parameters to replace in template
+    :return: Dataframe of query results
+    """
+    with open(sql_file, "r") as sql_file:
+        sql = sql_file.read()
+
+    client = set_up_bigquery()
+
+    df = run_query(sql.format(**replacement_dict), client)
+
+    return df
+
+
 def write_to_table(dataset, table, df, client, write_disposition="WRITE_APPEND"):
     """write data to bigquery table"""
     try:
@@ -131,3 +149,20 @@ def check_next_event_deadlinetime():
     deadlinetime = datetime.datetime.strptime(deadlinetime_str, "%Y-%m-%dT%H:%M:%SZ")
 
     return deadlinetime < datetime.datetime.now() + datetime.timedelta(hours=24)
+
+
+def get_current_event():
+    logger.info("getting current event")
+    bootstrap_request = requests.get(
+        "https://fantasy.premierleague.com/api/bootstrap-static/"
+    )
+    bootstrap_data = bootstrap_request.json()
+
+    # if no events are current, current event is zero
+    # season has yet to start
+    current_event = 0
+    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
+        # otherwise, take event id of event that is current
+        current_event = event["id"]
+
+    return current_event
