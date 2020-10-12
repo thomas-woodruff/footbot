@@ -119,6 +119,30 @@ def construct_player_team_weights(players):
     return player_team_weights
 
 
+def sort_bench(bench, players, optimise_key):
+    """
+    Sort bench players by keeper first, then descending values of optimise key.
+
+    :param bench: An array of elements for players on the bench
+    :param players: An array of dictionaries of player data
+    :param optimise_key: The variable to optimise for
+    :return: A sorted array of elements
+    """
+
+    elements = [
+        (i["element"], i["element_type"], i[optimise_key])
+        for i in players
+        if i["element"] in bench
+    ]
+
+    return [
+        i[0]
+        for i in sorted(
+            elements, key=lambda x: (1 if x[1] == 1 else 0, x[2]), reverse=True
+        )
+    ]
+
+
 def select_team(
     players,
     optimise_key="predicted_total_points",
@@ -144,7 +168,7 @@ def select_team(
     :param vice_factor: The probability the captain will not play
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
-    :return:
+    :return: A tuple of arrays for first team, bench, captain and vice and a dict of transfers
     """
 
     validate_optimisation_arguments(
@@ -216,7 +240,9 @@ def select_team(
     squad_prob.solve(solver="GLPK_MI")
 
     first_team = get_elements_from_vector(first_team_v.value, player_elements)
-    bench = get_elements_from_vector(bench_v.value, player_elements)
+    bench = sort_bench(
+        get_elements_from_vector(bench_v.value, player_elements), players, optimise_key
+    )
     captain = get_elements_from_vector(captain_v.value, player_elements)
     vice = get_elements_from_vector(vice_v.value, player_elements)
     transfers = {
@@ -287,20 +313,26 @@ def get_public_entry_data(entry):
     return public_data
 
 
-def get_sorted_safe_web_names(elements, players):
+def get_sorted_safe_web_names(elements, players, is_sorted=True):
     """
+    Get players names for a list of elements and sort by position.
 
     :param elements: An array of elements
     :param players: An array of dictionaries of player data
+    :param is_sorted: Optionally sort by position
     :return: An array of names ordered by position
     """
-    safe_web_names = [
-        (i["safe_web_name"], i["element_type"])
-        for i in players
-        if i["element"] in elements
-    ]
 
-    return [i[0] for i in sorted(safe_web_names, key=lambda x: x[1])]
+    if is_sorted:
+        return [
+            i["safe_web_name"]
+            for i in sorted(players, key=lambda x: x["element_type"])
+            if i["element"] in elements
+        ]
+    else:
+        return [
+            p["safe_web_name"] for e in elements for p in players if e == p["element"]
+        ]
 
 
 def optimise_entry(
@@ -377,7 +409,7 @@ def optimise_entry(
     )
 
     first_team = get_sorted_safe_web_names(first_team, players)
-    bench = get_sorted_safe_web_names(bench, players)
+    bench = get_sorted_safe_web_names(bench, players, is_sorted=False)
     captain = get_sorted_safe_web_names(captain, players)
     vice = get_sorted_safe_web_names(vice, players)
     transfers_in = get_sorted_safe_web_names(transfers["transfers_in"], players)
