@@ -1,6 +1,5 @@
 import logging
 
-import requests
 from flask import Flask
 from flask import request
 
@@ -240,7 +239,6 @@ def update_entry_picks_chips_entry_route_put(entry):
 
 @app.route("/update_predictions")
 def update_predictions_route():
-    logger.info("setting up big query client")
     client = utils.set_up_bigquery()
 
     predict_df = train_predict.get_predicted_points_df(
@@ -262,38 +260,45 @@ def update_predictions_route():
     return "predictions updated"
 
 
-@app.route("/optimise_team/<entry>")
-def optimise_team_route(entry):
+@app.route("/optimise_team/<entry>", methods=["GET", "POST"])
+def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
 
-    bootstrap_data = requests.get(
-        "https://fantasy.premierleague.com/api/bootstrap-static/"
-    ).json()
+    login = password = None
+    try:
+        data = request.json
+        login = data["login"]
+        password = data["password"]
+    except TypeError:
+        pass
+    except KeyError:
+        return "Data must contain 'login' and 'password'", 400
 
-    # if no events are current, current event is zero
-    # season has yet to start
-    current_event = 0
-    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
-        # otherwise, take event id of event that is current
-        current_event = event["id"]
+    current_event = utils.get_current_event()
 
     total_budget = int(request.args.get("total_budget", 1000))
+    first_team_factor = float(request.args.get("first_team_factor", 0.9))
     bench_factor = float(request.args.get("bench_factor", 0.1))
+    captain_factor = float(request.args.get("captain_factor", 0.9))
+    vice_factor = float(request.args.get("vice_factor", 0.1))
     transfer_penalty = float(request.args.get("transfer_penalty", 4))
     transfer_limit = int(request.args.get("transfer_limit", 15))
     start_event = int(request.args.get("start_event", current_event + 1))
     end_event = int(request.args.get("end_event", current_event + 1))
-    private = bool(request.args.get("private", False))
 
     try:
-        return team_selector.optimise_entry(
+        return optimise_entry(
             entry,
             total_budget=total_budget,
+            first_team_factor=first_team_factor,
             bench_factor=bench_factor,
+            captain_factor=captain_factor,
+            vice_factor=vice_factor,
             transfer_penalty=transfer_penalty,
             transfer_limit=transfer_limit,
             start_event=start_event,
             end_event=end_event,
-            private=private,
+            login=login,
+            password=password,
         )
     except Exception as e:
         logger.error(e)
