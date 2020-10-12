@@ -1,6 +1,5 @@
 import logging
 
-import requests
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Lasso
@@ -13,27 +12,15 @@ from footbot.data import utils
 logger = logging.getLogger(__name__)
 
 
-def get_predicted_points_df(train_sql_path, predict_sql_path, client):
-    bootstrap_data = requests.get(
-        "https://fantasy.premierleague.com/api/bootstrap-static/"
-    ).json()
-
-    # if no events are current, current event is zero
-    # season has yet to start
-    current_event = 0
-    for event in [i for i in bootstrap_data["events"] if i["is_current"]]:
-        # otherwise, take event id of event that is current
-        current_event = event["id"]
+def get_predicted_points_df(train_sql_file, predict_sql_file, client):
+    current_event = utils.get_current_event()
 
     logger.info("getting training dataset")
-    with open(train_sql_path, "r") as file:
-        train_sql = file.read()
-        train_df = utils.run_query(train_sql, client)
-
+    train_df = utils.run_templated_query(train_sql_file, {}, client)
     logger.info("getting prediction dataset")
-    with open(predict_sql_path, "r") as file:
-        predict_sql = file.read().format(current_event=current_event)
-        predict_df = utils.run_query(predict_sql, client)
+    predict_df = utils.run_templated_query(
+        predict_sql_file, dict(current_event=current_event), client
+    )
 
     categorical_features = [
         "element_type",
