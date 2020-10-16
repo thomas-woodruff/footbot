@@ -4,7 +4,6 @@ from flask import Flask
 from flask import request
 
 from footbot.data import element_data
-from footbot.data import entry_data
 from footbot.data import utils
 from footbot.optimiser import team_selector
 from footbot.predictor import train_predict
@@ -28,19 +27,6 @@ def create_update_element_history_fixtures_task(element, client):
     }
 
     utils.create_cloud_task(task, "update-element-history-fixtures", client, delay=120)
-
-
-def create_update_entry_picks_chips_task(entry, client):
-    logger.info(f"queueing entry {entry}")
-
-    task = {
-        "app_engine_http_request": {
-            "http_method": "POST",
-            "relative_uri": f"/update_entry_picks_chips/{entry}",
-        }
-    }
-
-    utils.create_cloud_task(task, "update-entry-picks-chips", client, delay=120)
 
 
 def update_element_history_fixtures_worker(element, delete=False):
@@ -77,35 +63,6 @@ def update_element_history_fixtures_worker(element, delete=False):
     )
     logger.info(f"done writing element {element} fixtures")
 
-
-def update_entry_picks_chips_worker(entry, delete=False):
-    logger.info(f"setting up client for entry {entry}")
-    client = utils.set_up_bigquery()
-
-    logger.info(f"getting entry {entry} data")
-    picks_df, chips_df = entry_data.get_top_entry_dfs(entry)
-
-    if delete:
-        logger.info(f"deleting entry {entry} picks")
-        utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.top_entries_picks_2021` WHERE entry = {entry}",
-            client,
-        )
-    logger.info(f"writing entry {entry} picks")
-
-    utils.write_to_table("fpl", "top_entries_picks_2021", picks_df, client)
-    logger.info(f"done writing entry {entry} picks")
-
-    if delete:
-        logger.info(f"deleting entry {entry} chips")
-        utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.top_entries_chips_2021` WHERE entry = {entry}",
-            client,
-        )
-
-    logger.info(f"writing entry {entry} chips")
-    utils.write_to_table("fpl", "top_entries_chips_2021", chips_df, client)
-    logger.info(f"done writing entry {entry} chips")
 
 
 @app.route("/")
@@ -180,60 +137,6 @@ def update_element_history_fixtures_element_route_put(element):
         return "lovely stuff"
     except Exception as e:
         logger.error(f"Unable to update element {element} with exception {e}")
-        return "bad news!"
-
-
-# @app.route("/update_entry_picks_chips")
-def update_entry_picks_chips_route():
-    logger.info("setting up cloud tasks client")
-    tasks_client = utils.set_up_tasks()
-
-    logger.info("purging queue")
-    utils.purge_cloud_queue("update-entry-picks-chips", tasks_client)
-
-    logger.info("setting up big query client")
-    big_query_client = utils.set_up_bigquery()
-
-    logger.info("deleting entry picks history")
-    utils.run_query(
-        "DELETE FROM `footbot-001.fpl.top_entries_picks_2021` WHERE true",
-        big_query_client,
-    )
-    logger.info("deleting entry chips history")
-    utils.run_query(
-        "DELETE FROM `footbot-001.fpl.top_entries_chips_2021` WHERE true",
-        big_query_client,
-    )
-
-    entries = entry_data.get_top_entries()
-
-    logger.info("queueing entries")
-
-    for entry in entries:
-        create_update_entry_picks_chips_task(entry, tasks_client)
-
-    logger.info("entries queued")
-
-    return "entries queued"
-
-
-# @app.route("/update_entry_picks_chips/<entry>", methods=["POST"])
-def update_entry_picks_chips_entry_route_post(entry):
-    try:
-        update_entry_picks_chips_worker(entry)
-        return "lovely stuff"
-    except Exception as e:
-        logger.error(f"Unable to update entry {entry} with exception {e}")
-        return "bad news!"
-
-
-# @app.route("/update_entry_picks_chips/<entry>", methods=["PUT"])
-def update_entry_picks_chips_entry_route_put(entry):
-    try:
-        update_entry_picks_chips_worker(entry, delete=True)
-        return "lovely stuff"
-    except Exception as e:
-        logger.error(f"Unable to update entry {entry} with exception {e}")
         return "bad news!"
 
 
