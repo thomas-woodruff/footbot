@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from pprint import pprint
 from typing import Optional
@@ -35,7 +36,6 @@ def serve(host: int, port: int):
 @click.option("--bench-factor", type=float, default=0.1)
 @click.option("--transfer-penalty", type=float, default=0)
 @click.option("--transfer-limit", type=int, default=1)
-@click.option("--private", type=bool, default=True)
 def optimise(
     team_id: int,
     start_event: int,
@@ -44,7 +44,6 @@ def optimise(
     transfer_penalty: float,
     transfer_limit: int,
     end_event: Optional[int] = None,
-    private: bool = True,
 ):
     end_event = start_event + 3 if end_event is None else end_event
     team_data = optimise_entry(
@@ -55,7 +54,8 @@ def optimise(
         transfer_limit=transfer_limit,
         start_event=start_event,
         end_event=end_event,
-        private=private,
+        login=os.environ.get('FPL_LOGIN'),
+        password=os.environ.get('FPL_PASSWORD'),
     )
 
     click.echo(pprint(team_data))

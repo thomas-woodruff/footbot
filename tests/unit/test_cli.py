@@ -35,7 +35,6 @@ def test_optimise_team():
                 "--bench-factor=2",
                 "--transfer-penalty=3",
                 "--transfer-limit=4",
-                "--private=True",
             ],
         )
         assert result.exit_code == 0
@@ -47,5 +46,6 @@ def test_optimise_team():
             transfer_limit=4,
             start_event=5,
             end_event=6,
-            private=True,
+            login=None,
+            password=None,
         )
