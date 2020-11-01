@@ -203,10 +203,10 @@ def select_team(
         first_team_v + bench_v <= np.ones(len(players)),
         # captain and vice different players
         captain_v + vice_v <= np.ones(len(players)),
-        # squad contains captain
-        first_team_v + bench_v - captain_v >= np.zeros(len(players)),
-        # squad contains vice
-        first_team_v + bench_v - vice_v >= np.zeros(len(players)),
+        # first team contains captain
+        first_team_v - captain_v >= np.zeros(len(players)),
+        # first team contains vice
+        first_team_v - vice_v >= np.zeros(len(players)),
         # number of transfers must not exceed limit
         num_transfers_v <= transfer_limit,
     ]
