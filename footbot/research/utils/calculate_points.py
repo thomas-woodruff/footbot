@@ -1,3 +1,5 @@
+
+
 def calculate_points(
     first_team,
     bench,
