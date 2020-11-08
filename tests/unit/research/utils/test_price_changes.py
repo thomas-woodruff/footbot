@@ -86,10 +86,12 @@ def test_update_player_values_with_selling_prices():
 def test_calculate_team_value():
     squad = [1, 2]
 
-    element_data_df = pd.DataFrame([
-        {'element_all': 1, 'value': 40},
-        {'element_all': 2, 'value': 50},
-        {'element_all': 3, 'value': 60},
-    ])
+    element_data_df = pd.DataFrame(
+        [
+            {"element_all": 1, "value": 40},
+            {"element_all": 2, "value": 50},
+            {"element_all": 3, "value": 60},
+        ]
+    )
 
     assert calculate_team_value(squad, element_data_df) == 90
