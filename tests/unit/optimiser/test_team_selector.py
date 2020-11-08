@@ -365,6 +365,8 @@ def test_select_team_from_scratch(players):
         "transfers_in": set(first_team + bench),
         "transfers_out": set(),
     }
+    assert captain[0] in first_team
+    assert vice[0] in first_team
 
 
 def test_select_team_from_existing(players):
@@ -382,6 +384,8 @@ def test_select_team_from_existing(players):
     assert set(captain) == {19}
     assert set(vice) == {18}
     assert transfers == {"transfers_in": {3}, "transfers_out": {1}}
+    assert captain[0] in first_team
+    assert vice[0] in first_team
 
 
 def test_select_team_transfer_penalty(players):
@@ -478,6 +482,21 @@ def test_select_team_team_constraint(players):
     assert set(bench) == {1, 5, 6, 11}
     assert set(captain) == {19}
     assert set(vice) == {18}
+
+
+def test_select_team_captain_vice_in_first_team(players):
+    for player in players:
+        if player["element"] in [1]:
+            player["key"] = 11
+        if player["element"] in [2]:
+            player["key"] = 10
+
+    first_team, bench, captain, vice, transfers = select_team(
+        players, optimise_key="key", total_budget=600, transfer_penalty=0
+    )
+
+    assert captain[0] in first_team
+    assert vice[0] in first_team
 
 
 def test_get_sorted_safe_web_names(players):
