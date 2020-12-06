@@ -64,7 +64,6 @@ def update_element_history_fixtures_worker(element, delete=False):
     logger.info(f"done writing element {element} fixtures")
 
 
-
 @app.route("/")
 def home_route():
     return "Greetings!"

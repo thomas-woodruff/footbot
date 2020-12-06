@@ -1,13 +1,10 @@
 import logging
 import os
-from pathlib import Path
 from pprint import pprint
 from typing import Optional
 
 import click
 
-from .data.utils import run_query
-from .data.utils import set_up_bigquery
 from .main import app
 from .optimiser.team_selector import optimise_entry
 
@@ -54,8 +51,8 @@ def optimise(
         transfer_limit=transfer_limit,
         start_event=start_event,
         end_event=end_event,
-        login=os.environ.get('FPL_LOGIN'),
-        password=os.environ.get('FPL_PASSWORD'),
+        login=os.environ.get("FPL_LOGIN"),
+        password=os.environ.get("FPL_PASSWORD"),
     )
 
     click.echo(pprint(team_data))
