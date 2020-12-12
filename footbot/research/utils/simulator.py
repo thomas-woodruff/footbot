@@ -14,3 +14,14 @@ def get_element_data(season, event, client):
     )
 
     return df
+
+
+def get_results_data(season, event, client):
+
+    sql_template_path = os.path.join(Path(__file__).parents[0], "results_data.sql")
+
+    df = run_templated_query(
+        sql_template_path, dict(season=season, event=event), client
+    )
+
+    return df

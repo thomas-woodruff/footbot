@@ -1,6 +1,7 @@
 -- total points earned and minutes played by element for a given season and event
 -- this is used to calculate the points earned by selected players
 -- minutes and element_Type are required when making substitutions
+-- this data does not contain elements without fixtures
 SELECT
   element_all,
   element_type,
