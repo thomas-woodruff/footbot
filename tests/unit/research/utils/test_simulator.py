@@ -2,6 +2,7 @@ import pandas as pd
 
 from footbot.research.utils.simulator import aggregate_predictions
 from footbot.research.utils.simulator import get_team_selector_input
+from footbot.research.utils.simulator import set_event_state
 
 
 def test_aggregate_predictions():
@@ -65,3 +66,71 @@ def test_get_team_selector_input():
     ]
 
     assert players == expected_players
+
+
+def test_set_event_state():
+
+    element_data_df = pd.DataFrame(
+        [
+            {"element_all": 1, "value": 60},
+            {"element_all": 2, "value": 60},
+            {"element_all": 3, "value": 60},
+            {"element_all": 4, "value": 60},
+            {"element_all": 5, "value": 60},
+            {"element_all": 6, "value": 60},
+            {"element_all": 7, "value": 60},
+            {"element_all": 8, "value": 60},
+            {"element_all": 9, "value": 60},
+            {"element_all": 10, "value": 60},
+            {"element_all": 11, "value": 60},
+            {"element_all": 12, "value": 60},
+            {"element_all": 13, "value": 60},
+            {"element_all": 14, "value": 60},
+            {"element_all": 15, "value": 60},
+        ]
+    )
+
+    assert set_event_state(1, None, None, None, None, element_data_df) == {
+        "existing_squad_elements": None,
+        "total_budget": 1000,
+        "free_transfers_available": 1,
+    }
+
+    assert set_event_state(
+        2,
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        [12, 13, 14, 15],
+        100,
+        1,
+        element_data_df,
+    ) == {
+        "existing_squad_elements": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        "total_budget": 1000,
+        "free_transfers_available": 1,
+    }
+
+    assert set_event_state(
+        2,
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        [12, 13, 14, 15],
+        100,
+        0,
+        element_data_df,
+    ) == {
+        "existing_squad_elements": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        "total_budget": 1000,
+        "free_transfers_available": 2,
+    }
+
+    assert set_event_state(
+        2,
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        [12, 13, 14, 15],
+        100,
+        10,
+        element_data_df,
+    ) == {
+        "existing_squad_elements": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        "total_budget": 1000,
+        "free_transfers_available": 1,
+    }

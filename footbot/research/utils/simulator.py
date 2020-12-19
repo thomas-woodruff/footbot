@@ -3,6 +3,7 @@ from pathlib import Path
 
 from footbot.data.utils import run_templated_query
 from footbot.data.utils import set_up_bigquery
+from footbot.research.utils.price_changes import calculate_team_value
 
 
 def get_element_data(season, event, client):
@@ -62,8 +63,28 @@ def get_team_selector_input(predictions_df, element_data_df, start_event, end_ev
     ].fillna(0)
 
     # team selector expects "element" instead of "element_all"
-    players = players_df.rename(columns={"element_all": "element"}).to_dict(
-        orient="records"
-    )
+    players_df = players_df.rename(columns={"element_all": "element"})
+
+    players = players_df.to_dict(orient="records")
 
     return players
+
+
+def set_event_state(event, first_team, bench, bank, transfers_made, element_data_df):
+    if event == 1:
+        existing_squad_elements = None
+        total_budget = 1000
+        free_transfers_available = 1
+    else:
+        existing_squad_elements = first_team + bench
+        team_value = calculate_team_value(first_team + bench, element_data_df)
+        total_budget = team_value + bank
+        free_transfers_available = 2 if transfers_made == 0 else 1
+
+    event_state = dict(
+        existing_squad_elements=existing_squad_elements,
+        total_budget=total_budget,
+        free_transfers_available=free_transfers_available,
+    )
+
+    return event_state
