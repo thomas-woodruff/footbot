@@ -186,6 +186,7 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
     transfer_limit = int(request.args.get("transfer_limit", 15))
     start_event = int(request.args.get("start_event", current_event + 1))
     end_event = int(request.args.get("end_event", current_event + 1))
+    excluded_events = request.args.get("excluded_events", None)
 
     try:
         return optimise_entry(
@@ -199,6 +200,7 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
             transfer_limit=transfer_limit,
             start_event=start_event,
             end_event=end_event,
+            excluded_events=excluded_events,
             login=login,
             password=password,
         )

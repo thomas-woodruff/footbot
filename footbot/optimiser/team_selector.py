@@ -346,6 +346,7 @@ def optimise_entry(
     transfer_limit=15,
     start_event=1,
     end_event=38,
+    excluded_events=None,
     login=None,
     password=None,
 ):
@@ -362,18 +363,27 @@ def optimise_entry(
     :param vice_factor: The probability the captain will not play
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
-    :param start_event: Start of event range to optimiser over
-    :param end_event: End of event range to optimiser over
+    :param start_event: Start of event range to optimise over
+    :param end_event: End of event range to optimise over
+    :param excluded_events: Comma-separated string of events to exclude from optimisation
     :param login: FPL login
     :param password: FPL password
     :return: Dictionary of team selection decisions
     """
 
     logger.info("getting predictions")
+
     client = set_up_bigquery()
+
+    if excluded_events:
+        num_excluded_events = len(excluded_events.split(','))
+    else:
+        excluded_events = 0
+        num_excluded_events = 0
+
     players = run_templated_query(
         "./footbot/optimiser/sql/optimiser.sql",
-        dict(start_event=start_event, end_event=end_event),
+        dict(start_event=start_event, end_event=end_event, excluded_events=excluded_events, num_excluded_events=num_excluded_events),
         client,
     ).to_dict("records")
 

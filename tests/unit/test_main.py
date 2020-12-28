@@ -29,6 +29,7 @@ def test_optimise_team_route_public(flask_app):
         "&transfer_limit=20"
         "&start_event=10"
         "&end_event=20"
+        "&excluded_events=15,17"
     ):
         assert (
             optimise_team_route(1234, optimise_entry=optimise_entry)
@@ -45,6 +46,7 @@ def test_optimise_team_route_public(flask_app):
             transfer_limit=20,
             start_event=10,
             end_event=20,
+            excluded_events='15,17',
             login=None,
             password=None,
         )
@@ -77,6 +79,7 @@ def test_optimise_team_route_private(flask_app):
             transfer_limit=ANY,
             start_event=ANY,
             end_event=ANY,
+            excluded_events=ANY,
             login="login",
             password="password",
         )

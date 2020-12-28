@@ -2,7 +2,7 @@ WITH
   predictions AS (
   SELECT
     element,
-    SUM(predicted_total_points)/({end_event} - {start_event} + 1) AS average_points
+    SUM(predicted_total_points)/({end_event} - {start_event} - {num_excluded_events} + 1) AS average_points
   FROM (
     SELECT
       element,
@@ -13,6 +13,7 @@ WITH
   WHERE
     event BETWEEN {start_event}
     AND {end_event}
+    AND event NOT IN ({excluded_events})
   GROUP BY
     1 ),
   --------------------------------------------------------------------------------------------------------------------------------------------------------------
