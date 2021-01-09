@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from footbot.data.utils import set_up_bigquery
-from footbot.research.utils.simulator import get_element_data
-from footbot.research.utils.simulator import get_results_data
+from footbot.research.utils.simulator import get_elements_df
+from footbot.research.utils.simulator import get_results_df
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def client():
 
 
 def test_get_element_data(client):
-    df = get_element_data("1920", 15, client)
+    df = get_elements_df("1920", 15, client)
 
     assert set(df.columns) == {"element_all", "element_type", "team", "value"}
     assert len(df) == 586
@@ -25,8 +25,8 @@ def test_get_element_data(client):
 
 
 def test_get_results_data(client):
-    df = get_results_data("1920", 15, client)
+    df = get_results_df("1920", 15, client)
 
-    assert set(df.columns) == {"element_all", "element_type", "minutes", "total_points"}
+    assert set(df.columns) == {"element_all", "minutes", "total_points"}
     assert len(df) == 564
     assert len(df["element_all"]) == len(df["element_all"].drop_duplicates())

@@ -6,7 +6,7 @@ from footbot.research.utils.subs import pick_captain
 
 
 @pytest.fixture()
-def first_team():
+def first_team_dicts():
     return [
         {
             "element": 1,
@@ -89,7 +89,7 @@ def first_team():
 
 
 @pytest.fixture()
-def bench():
+def bench_dicts():
     return [
         {
             "element": 12,
@@ -122,37 +122,37 @@ def bench():
     ]
 
 
-def test_check_valid_formation_valid(first_team):
+def test_check_valid_formation_valid(first_team_dicts):
 
-    assert check_valid_formation(first_team)
+    assert check_valid_formation(first_team_dicts)
 
 
-def test_check_valid_formation_invalid(first_team):
-    for player in first_team:
+def test_check_valid_formation_invalid(first_team_dicts):
+    for player in first_team_dicts:
         if player["element"] in [4]:
             player["element_type"] = 3
 
-    assert not check_valid_formation(first_team)
+    assert not check_valid_formation(first_team_dicts)
 
 
-def test_make_subs_no_subs(first_team, bench):
-    ft, b = make_subs(first_team, bench)
+def test_make_subs_no_subs(first_team_dicts, bench_dicts):
+    ft, b = make_subs(first_team_dicts, bench_dicts)
     ft = [i["element"] for i in ft]
     b = [i["element"] for i in b]
 
-    expected_ft = [i["element"] for i in first_team]
-    expected_b = [i["element"] for i in bench]
+    expected_ft = [i["element"] for i in first_team_dicts]
+    expected_b = [i["element"] for i in bench_dicts]
 
     assert set(ft) == set(expected_ft)
     assert set(b) == set(expected_b)
 
 
-def test_make_subs_all_subs(first_team, bench):
-    for player in first_team:
+def test_make_subs_all_subs(first_team_dicts, bench_dicts):
+    for player in first_team_dicts:
         if player["element"] in [1, 8, 11]:
             player["minutes"] = 0
 
-    ft, b = make_subs(first_team, bench)
+    ft, b = make_subs(first_team_dicts, bench_dicts)
     ft = [i["element"] for i in ft]
     b = [i["element"] for i in b]
 
@@ -163,12 +163,12 @@ def test_make_subs_all_subs(first_team, bench):
     assert set(b) == set(b_expected)
 
 
-def test_make_subs_some_subs(first_team, bench):
-    for player in first_team:
+def test_make_subs_some_subs(first_team_dicts, bench_dicts):
+    for player in first_team_dicts:
         if player["element"] in [2, 3, 4]:
             player["minutes"] = 0
 
-    ft, b = make_subs(first_team, bench)
+    ft, b = make_subs(first_team_dicts, bench_dicts)
     ft = [i["element"] for i in ft]
     b = [i["element"] for i in b]
 
@@ -179,8 +179,8 @@ def test_make_subs_some_subs(first_team, bench):
     assert set(b) == set(b_expected)
 
 
-def test_get_captain_no_change(first_team):
-    ft = pick_captain(first_team)
+def test_pick_captain_no_change(first_team_dicts):
+    ft = pick_captain(first_team_dicts)
     c = [i["element"] for i in ft if i["is_captain"]]
     v = [i["element"] for i in ft if i["is_vice"]]
 
@@ -188,12 +188,12 @@ def test_get_captain_no_change(first_team):
     assert v == [10]
 
 
-def test_get_captain_sub(first_team):
-    for player in first_team:
+def test_pick_captain_sub(first_team_dicts):
+    for player in first_team_dicts:
         if player["is_captain"]:
             player["minutes"] = 0
 
-    ft = pick_captain(first_team)
+    ft = pick_captain(first_team_dicts)
     c = [i["element"] for i in ft if i["is_captain"]]
     v = [i["element"] for i in ft if i["is_vice"]]
 
@@ -201,12 +201,12 @@ def test_get_captain_sub(first_team):
     assert v == []
 
 
-def test_get_captain_both_missing(first_team):
-    for player in first_team:
+def test_pick_captain_both_missing(first_team_dicts):
+    for player in first_team_dicts:
         if player["is_captain"] or player["is_vice"]:
             player["minutes"] = 0
 
-    ft = pick_captain(first_team)
+    ft = pick_captain(first_team_dicts)
     c = [i["element"] for i in ft if i["is_captain"]]
     v = [i["element"] for i in ft if i["is_vice"]]
 
