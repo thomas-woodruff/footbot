@@ -2,7 +2,11 @@ import logging
 import os
 from pathlib import Path
 
+import pandas as pd
+
+from footbot.data.utils import run_query
 from footbot.data.utils import run_templated_query
+from footbot.data.utils import write_to_table
 from footbot.optimiser.team_selector import select_team
 from footbot.research.utils.calculate_points import calculate_points
 from footbot.research.utils.price_changes import calculate_team_value
@@ -199,7 +203,7 @@ def simulate_event(
     season,
     event,
     purchase_price_dict,
-    get_predictions_df,
+    predictions_df,
     first_team,
     bench,
     bank,
@@ -219,7 +223,8 @@ def simulate_event(
     elements_df = get_elements_df(season, event, client)
     update_player_values_with_selling_prices(elements_df, purchase_price_dict)
 
-    predictions_df = get_predictions_df(season, event, client)
+    predictions_df = predictions_df.copy()
+    predictions_df = predictions_df.loc[predictions_df["prediction_event"] == event, :]
 
     existing_squad, total_budget, free_transfers_available = set_event_state(
         event, first_team, bench, bank, transfers_made, elements_df
@@ -285,6 +290,35 @@ def simulate_event(
     )
 
 
+def retrieve_or_save_predictions(
+    season, events, get_predictions_df, dataset, table, save_new_predictions, client
+):
+
+    table_id = f"footbot-001.{dataset}.{table}"
+
+    if save_new_predictions:
+        run_query(f"DELETE FROM `{table_id}` WHERE true", client)
+
+        predictions_df_arr = []
+
+        for event in events:
+            predictions_df = get_predictions_df(season, event, client)
+            predictions_df["prediction_event"] = event
+            write_to_table(
+                dataset,
+                table,
+                predictions_df,
+                client,
+            )
+            predictions_df_arr.append(predictions_df)
+
+        return pd.concat(predictions_df_arr)
+    else:
+        predictions_df = run_query(f"SELECT * FROM `{table_id}`", client)
+
+        return predictions_df
+
+
 def simulate_events(
     season,
     events,
@@ -296,8 +330,14 @@ def simulate_events(
     vice_factor,
     transfer_penalty,
     transfer_limit,
+    dataset,
+    table,
+    save_new_predictions,
     client,
 ):
+    predictions_df = retrieve_or_save_predictions(
+        season, events, get_predictions_df, dataset, table, save_new_predictions, client
+    )
 
     purchase_price_dict = {}
     first_team = None
@@ -329,7 +369,7 @@ def simulate_events(
             season,
             event,
             purchase_price_dict,
-            get_predictions_df,
+            predictions_df,
             first_team,
             bench,
             bank,

@@ -8,8 +8,6 @@ from google.cloud import bigquery
 from google.cloud import bigquery_storage_v1beta1
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
-from six import BytesIO
-from six import StringIO
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +17,7 @@ def get_safe_web_name(web_name):
     try:
         return u.unidecode(web_name).lower()
     except Exception as e:
-        logger.info(e)
+        logger.error(e)
         return web_name.lower()
 
 
@@ -64,7 +62,7 @@ def run_query(sql, client):
         bqstorage_client = bigquery_storage_v1beta1.BigQueryStorageClient()
         return client.query(sql).to_dataframe(bqstorage_client=bqstorage_client)
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 def run_templated_query(sql_file, replacement_dict, client):
@@ -84,34 +82,23 @@ def run_templated_query(sql_file, replacement_dict, client):
     return df
 
 
-def write_to_table(dataset, table, df, client, write_disposition="WRITE_APPEND"):
+def write_to_table(
+    dataset,
+    table,
+    df,
+    client,
+    write_disposition="WRITE_APPEND",
+    create_disposition="CREATE_IF_NEEDED",
+):
     """write data to BigQuery table"""
     try:
-        string_buffer = StringIO()
-        bytes_buffer = BytesIO()
-
-        dataset_ref = client.dataset(dataset)
-        table_ref = dataset_ref.table(table)
-
         job_config = bigquery.LoadJobConfig()
-        job_config.source_format = "CSV"
-        job_config.skip_leading_rows = 1
         job_config.write_disposition = write_disposition
+        job_config.create_disposition = create_disposition
 
-        # to_csv writes out a string
-        df.to_csv(string_buffer, index=False)
-
-        # move cursor to to beginning of string buffer
-        string_buffer.seek(0)
-        # create bytes representation of string buffer
-        # needs to be encoded as utf-8 for bigquery
-        bytes_buffer.write(string_buffer.read().encode("utf-8"))
-        # move cursor to to beginning of bytes buffer
-        bytes_buffer.seek(0)
-
-        # load_table_from_file expects bytes
-        job = client.load_table_from_file(
-            bytes_buffer, table_ref, job_config=job_config
+        job = client.load_table_from_dataframe(
+            df,
+            f"footbot-001.{dataset}.{table}",
         )
 
         return job.result()
