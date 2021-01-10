@@ -36,7 +36,7 @@ def make_subs(first_team_dicts, bench_dicts):
     for b in bench_dicts:
         for m in missing_players:
             candidate_first_team_dicts = [
-                i for i in first_team_dicts if i["element"] != m["element"]
+                i for i in first_team_dicts if i["element_all"] != m["element_all"]
             ] + [b]
 
             if check_valid_formation(candidate_first_team_dicts):

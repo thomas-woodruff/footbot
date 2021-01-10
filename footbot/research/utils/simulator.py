@@ -3,10 +3,13 @@ from pathlib import Path
 
 from footbot.data.utils import run_templated_query
 from footbot.optimiser.team_selector import select_team
+from footbot.research.utils.calculate_points import calculate_points
 from footbot.research.utils.price_changes import calculate_team_value
 from footbot.research.utils.price_changes import (
     update_player_values_with_selling_prices,
 )
+from footbot.research.utils.subs import make_subs
+from footbot.research.utils.subs import pick_captain
 
 
 def get_elements_df(season, event, client):
@@ -92,26 +95,26 @@ def get_points_calculator_input(
     )
     results_df["is_vice"] = results_df["element_all"].apply(lambda x: x == vice[0])
 
-    first_team_dict = results_df.loc[
+    first_team_dicts = results_df.loc[
         results_df["element_all"].isin(first_team), :
     ].to_dict(orient="records")
-    bench_dict = results_df.loc[results_df["element_all"].isin(bench), :].to_dict(
+    bench_dicts = results_df.loc[results_df["element_all"].isin(bench), :].to_dict(
         orient="records"
     )
 
-    return first_team_dict, bench_dict
+    return first_team_dicts, bench_dicts
 
 
-def set_event_state(event, first_team, bench, bank, transfers, elements_df):
+def set_event_state(event, first_team, bench, bank, transfers_made, elements_df):
     if event == 1:
-        existing_squad = None
+        existing_squad = []
         total_budget = 1000
         free_transfers_available = 1
     else:
         existing_squad = first_team + bench
         team_value = calculate_team_value(first_team + bench, elements_df)
         total_budget = team_value + bank
-        free_transfers_available = 2 if len(transfers["transfers_in"]) == 0 else 1
+        free_transfers_available = 2 if transfers_made == 0 else 1
 
     return existing_squad, total_budget, free_transfers_available
 
@@ -193,7 +196,7 @@ def simulate_event(
     first_team,
     bench,
     bank,
-    transfers,
+    transfers_made,
     events_to_look_ahead,
     first_team_factor,
     bench_factor,
@@ -201,6 +204,8 @@ def simulate_event(
     vice_factor,
     transfer_penalty,
     transfer_limit,
+    triple_captain,
+    bench_boost,
     client,
 ):
 
@@ -210,7 +215,7 @@ def simulate_event(
     predictions_df = get_predictions_df(season, event, client)
 
     existing_squad, total_budget, free_transfers_available = set_event_state(
-        event, first_team, bench, bank, transfers, elements_df
+        event, first_team, bench, bank, transfers_made, elements_df
     )
 
     existing_squad, bank, transfers = make_transfers(
@@ -227,6 +232,7 @@ def simulate_event(
         predictions_df,
         elements_df,
     )
+    transfers_made = len(transfers["transfers_in"])
 
     first_team, bench, captain, vice = make_team_selection(
         event,
@@ -242,8 +248,28 @@ def simulate_event(
 
     results_df = get_results_df(season, event, client)
 
-    # make subs
-    # first_team_dict =
+    first_team_dicts, bench_dicts = get_points_calculator_input(
+        results_df, elements_df, first_team, bench, captain, vice
+    )
+    first_team_dicts = pick_captain(first_team_dicts)
+    first_team_dicts, bench_dicts = make_subs(first_team_dicts, bench_dicts)
 
-    # calculate points
-    # return transfers, selections, points and anything else (state)
+    event_points = calculate_points(
+        first_team_dicts,
+        bench_dicts,
+        transfers_made,
+        free_transfers_available,
+        triple_captain=triple_captain,
+        bench_boost=bench_boost,
+    )
+
+    return (
+        event_points,
+        first_team,
+        bench,
+        captain,
+        vice,
+        transfers,
+        bank,
+        transfers_made,
+    )

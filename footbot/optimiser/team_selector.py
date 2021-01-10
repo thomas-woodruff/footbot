@@ -215,6 +215,9 @@ def select_team(
     squad_prob = cp.Problem(cp.Maximize(objective), constraints)
     squad_prob.solve(solver="GLPK_MI")
 
+    if squad_prob.status != "optimal":
+        raise Exception("Unable to find optimal team selection")
+
     first_team = get_elements_from_vector(first_team_v.value, player_elements)
     bench = get_elements_from_vector(bench_v.value, player_elements)
     captain = get_elements_from_vector(captain_v.value, player_elements)

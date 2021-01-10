@@ -1,8 +1,10 @@
 import pandas as pd
+import pytest
 
 from footbot.research.utils.simulator import aggregate_predictions
 from footbot.research.utils.simulator import get_points_calculator_input
 from footbot.research.utils.simulator import get_team_selector_input
+from footbot.research.utils.simulator import make_transfers
 from footbot.research.utils.simulator import set_event_state
 
 
@@ -51,14 +53,14 @@ def test_get_team_selector_input():
 
     expected_players = [
         {
-            "element": 1,
+            "element_all": 1,
             "element_type": 1,
             "team": 1,
             "value": 10.0,
             "avg_predicted_total_points": 1.0,
         },
         {
-            "element": 2,
+            "element_all": 2,
             "element_type": 4,
             "team": 3,
             "value": 7.5,
@@ -161,7 +163,7 @@ def test_set_event_state():
     )
 
     assert set_event_state(1, None, None, None, None, elements_df) == (
-        None,
+        [],
         1000,
         1,
     )
@@ -172,7 +174,7 @@ def test_set_event_state():
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
             [12, 13, 14, 15],
             100,
-            {"transfers_in": [1]},
+            1,
             elements_df,
         )
         == ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 1000, 1)
@@ -184,7 +186,7 @@ def test_set_event_state():
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
             [12, 13, 14, 15],
             100,
-            {"transfers_in": []},
+            0,
             elements_df,
         )
         == ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 1000, 2)
@@ -196,8 +198,296 @@ def test_set_event_state():
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
             [12, 13, 14, 15],
             100,
-            {"transfers_in": [1, 2, 3]},
+            3,
             elements_df,
         )
         == ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 1000, 1)
     )
+
+
+@pytest.fixture
+def elements_df():
+
+    return pd.DataFrame(
+        [
+            {
+                "element_all": 1,
+                "value": 40,
+                "element_type": 1,
+                "team": 1,
+            },
+            {
+                "element_all": 2,
+                "value": 40,
+                "element_type": 1,
+                "team": 2,
+            },
+            {
+                "element_all": 3,
+                "value": 40,
+                "element_type": 1,
+                "team": 3,
+            },
+            {
+                "element_all": 4,
+                "value": 40,
+                "element_type": 2,
+                "team": 4,
+            },
+            {
+                "element_all": 5,
+                "value": 40,
+                "element_type": 2,
+                "team": 5,
+            },
+            {
+                "element_all": 6,
+                "value": 40,
+                "element_type": 2,
+                "team": 6,
+            },
+            {
+                "element_all": 7,
+                "value": 40,
+                "element_type": 2,
+                "team": 7,
+            },
+            {
+                "element_all": 8,
+                "value": 40,
+                "element_type": 2,
+                "team": 8,
+            },
+            {
+                "element_all": 9,
+                "value": 40,
+                "element_type": 2,
+                "team": 9,
+            },
+            {
+                "element_all": 10,
+                "value": 40,
+                "element_type": 3,
+                "team": 10,
+            },
+            {
+                "element_all": 11,
+                "value": 40,
+                "element_type": 3,
+                "team": 11,
+            },
+            {
+                "element_all": 12,
+                "value": 40,
+                "element_type": 3,
+                "team": 12,
+            },
+            {
+                "element_all": 13,
+                "value": 40,
+                "element_type": 3,
+                "team": 13,
+            },
+            {
+                "element_all": 14,
+                "value": 40,
+                "element_type": 3,
+                "team": 14,
+            },
+            {
+                "element_all": 15,
+                "value": 40,
+                "element_type": 3,
+                "team": 15,
+            },
+            {
+                "element_all": 16,
+                "value": 40,
+                "element_type": 4,
+                "team": 16,
+            },
+            {
+                "element_all": 17,
+                "value": 40,
+                "element_type": 4,
+                "team": 17,
+            },
+            {
+                "element_all": 18,
+                "value": 40,
+                "element_type": 4,
+                "team": 18,
+            },
+            {
+                "element_all": 19,
+                "value": 40,
+                "element_type": 4,
+                "team": 19,
+            },
+            {
+                "element_all": 20,
+                "value": 40,
+                "element_type": 4,
+                "team": 20,
+            },
+        ]
+    )
+
+
+@pytest.fixture
+def predictions_df():
+
+    return pd.DataFrame(
+        [
+            {
+                "element_all": 1,
+                "event": 1,
+                "predicted_total_points": 4,
+            },
+            {
+                "element_all": 2,
+                "event": 1,
+                "predicted_total_points": 5,
+            },
+            {
+                "element_all": 3,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 4,
+                "event": 1,
+                "predicted_total_points": 4,
+            },
+            {
+                "element_all": 5,
+                "event": 1,
+                "predicted_total_points": 5,
+            },
+            {
+                "element_all": 6,
+                "event": 1,
+                "predicted_total_points": 5,
+            },
+            {
+                "element_all": 7,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 8,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 9,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 10,
+                "event": 1,
+                "predicted_total_points": 4,
+            },
+            {
+                "element_all": 11,
+                "event": 1,
+                "predicted_total_points": 5,
+            },
+            {
+                "element_all": 12,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 13,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 14,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 15,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 16,
+                "event": 1,
+                "predicted_total_points": 4,
+            },
+            {
+                "element_all": 17,
+                "event": 1,
+                "predicted_total_points": 6,
+            },
+            {
+                "element_all": 18,
+                "event": 1,
+                "predicted_total_points": 6.5,
+            },
+            {
+                "element_all": 19,
+                "event": 1,
+                "predicted_total_points": 7,
+            },
+            {
+                "element_all": 20,
+                "event": 1,
+                "predicted_total_points": 3,
+            },
+        ]
+    )
+
+
+def test_make_transfers_from_scratch(elements_df, predictions_df):
+
+    existing_squad, bank, transfers = make_transfers(
+        1,
+        0,
+        [],
+        600,
+        0.9,
+        0.1,
+        0.9,
+        0.1,
+        0,
+        15,
+        predictions_df,
+        elements_df,
+    )
+
+    assert set(existing_squad) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11}
+    assert bank == 0
+    assert transfers == {
+        "transfers_in": set(existing_squad),
+        "transfers_out": set(),
+    }
+
+
+def test_make_transfers_from_existing(elements_df, predictions_df):
+
+    existing_squad, bank, transfers = make_transfers(
+        1,
+        0,
+        [1, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
+        600,
+        0.9,
+        0.1,
+        0.9,
+        0.1,
+        0,
+        15,
+        predictions_df,
+        elements_df,
+    )
+
+    assert set(existing_squad) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11}
+    assert bank == 0
+    assert transfers == {
+        "transfers_in": {3},
+        "transfers_out": {1},
+    }
