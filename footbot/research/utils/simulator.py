@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from footbot.research.utils.price_changes import (
 )
 from footbot.research.utils.subs import make_subs
 from footbot.research.utils.subs import pick_captain
+
+logger = logging.getLogger(__name__)
 
 
 def get_elements_df(season, event, client):
@@ -136,6 +139,10 @@ def make_transfers(
     players = get_team_selector_input(
         predictions_df, elements_df, event, event + events_to_look_ahead
     )
+
+    # when making a team from scratch we require 15 transfers
+    if event == 1:
+        transfer_limit = 15
 
     first_team, bench, _, _, transfers = select_team(
         players,
@@ -272,4 +279,88 @@ def simulate_event(
         transfers,
         bank,
         transfers_made,
+        predictions_df,
+        results_df,
+        elements_df,
     )
+
+
+def simulate_events(
+    season,
+    events,
+    get_predictions_df,
+    events_to_look_ahead,
+    first_team_factor,
+    bench_factor,
+    captain_factor,
+    vice_factor,
+    transfer_penalty,
+    transfer_limit,
+    client,
+):
+
+    purchase_price_dict = {}
+    first_team = None
+    bench = None
+    bank = None
+    transfers_made = None
+    triple_captain = False
+    bench_boost = False
+
+    simulation_results_arr = []
+
+    for event in events:
+
+        logger.info(f"simulating event {event}")
+
+        (
+            event_points,
+            first_team,
+            bench,
+            captain,
+            vice,
+            transfers,
+            bank,
+            transfers_made,
+            predictions_df,
+            results_df,
+            elements_df,
+        ) = simulate_event(
+            season,
+            event,
+            purchase_price_dict,
+            get_predictions_df,
+            first_team,
+            bench,
+            bank,
+            transfers_made,
+            events_to_look_ahead,
+            first_team_factor,
+            bench_factor,
+            captain_factor,
+            vice_factor,
+            transfer_penalty,
+            transfer_limit,
+            triple_captain,
+            bench_boost,
+            client,
+        )
+
+        simulation_results_arr.append(
+            {
+                "event": event,
+                "event_points": event_points,
+                "first_team": first_team,
+                "bench": bench,
+                "captain": captain,
+                "vice": vice,
+                "transfers": transfers,
+                "bank": bank,
+                "transfers_made": transfers_made,
+                "predictions_df": predictions_df,
+                "results_df": results_df,
+                "elements_df": elements_df,
+            }
+        )
+
+    return simulation_results_arr

@@ -10,6 +10,7 @@ from footbot.research.utils.simulator import get_results_df
 from footbot.research.utils.simulator import make_team_selection
 from footbot.research.utils.simulator import make_transfers
 from footbot.research.utils.simulator import simulate_event
+from footbot.research.utils.simulator import simulate_events
 
 
 @pytest.fixture
@@ -94,7 +95,7 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
         0.9,
         0.1,
         0,
-        15,
+        1,
         predictions_df,
         elements_df,
     )
@@ -138,9 +139,26 @@ def test_simulate_event(client):
         0.1,
         0.9,
         0.1,
-        4,
-        15,
+        0,
+        1,
         False,
         False,
+        client,
+    )
+
+
+def test_simulate_events(client):
+
+    simulate_events(
+        1920,
+        [1, 2, 3],
+        get_predictions_df,
+        0,
+        0.9,
+        0.1,
+        0.9,
+        0.1,
+        0,
+        1,
         client,
     )

@@ -53,14 +53,14 @@ def test_get_team_selector_input():
 
     expected_players = [
         {
-            "element_all": 1,
+            "element": 1,
             "element_type": 1,
             "team": 1,
             "value": 10.0,
             "avg_predicted_total_points": 1.0,
         },
         {
-            "element_all": 2,
+            "element": 2,
             "element_type": 4,
             "team": 3,
             "value": 7.5,
