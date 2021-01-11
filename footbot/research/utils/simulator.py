@@ -144,7 +144,7 @@ def make_transfers(
         predictions_df, elements_df, event, event + events_to_look_ahead
     )
 
-    # when making a team from scratch we require 15 free transfers
+    # when making a team from scratch we require 15 transfers
     if event == 1:
         transfer_limit = 15
 
