@@ -11,7 +11,7 @@ from footbot.research.utils.simulator import simulate_event
 from footbot.research.utils.simulator import simulate_events
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def elements_df(client):
     return get_elements_df("1920", 1, client)
 
@@ -46,7 +46,7 @@ def get_predictions_df(season, event, client):
     return predictions_df
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def predictions_df(client):
 
     predictions_df = get_predictions_df("1920", 1, client)

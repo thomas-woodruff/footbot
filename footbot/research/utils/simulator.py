@@ -225,7 +225,9 @@ def simulate_event(
     update_player_values_with_selling_prices(elements_df, purchase_price_dict)
 
     event_predictions_df = predictions_df.copy()
-    event_predictions_df = event_predictions_df .loc[event_predictions_df["prediction_event"] == event, :]
+    event_predictions_df = event_predictions_df.loc[
+        event_predictions_df["prediction_event"] == event, :
+    ]
 
     existing_squad, total_budget, free_transfers_available = set_event_state(
         event, first_team, bench, bank, transfers_made, elements_df
@@ -303,7 +305,7 @@ def retrieve_or_save_predictions(
         predictions_df_arr = []
 
         for event in events:
-            logger.info(f'writing predictions as of event {event}')
+            logger.info(f"writing predictions as of event {event}")
             predictions_df = get_predictions_df(season, event, client)
             predictions_df["prediction_event"] = event
             write_to_table(
