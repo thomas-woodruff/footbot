@@ -302,6 +302,7 @@ def retrieve_or_save_predictions(
         predictions_df_arr = []
 
         for event in events:
+            logger.info(f'writing predictions as of event {event}')
             predictions_df = get_predictions_df(season, event, client)
             predictions_df["prediction_event"] = event
             write_to_table(
