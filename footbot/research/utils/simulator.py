@@ -224,7 +224,7 @@ def simulate_event(
     update_player_values_with_selling_prices(elements_df, purchase_price_dict)
 
     event_predictions_df = predictions_df.copy()
-    event_predictions_df  = event_predictions_df .loc[event_predictions_df ["prediction_event"] == event, :]
+    event_predictions_df = event_predictions_df .loc[event_predictions_df["prediction_event"] == event, :]
 
     existing_squad, total_budget, free_transfers_available = set_event_state(
         event, first_team, bench, bank, transfers_made, elements_df
@@ -241,7 +241,7 @@ def simulate_event(
         vice_factor,
         transfer_penalty,
         transfer_limit,
-        predictions_df,
+        event_predictions_df,
         elements_df,
     )
     transfers_made = len(transfers["transfers_in"])
@@ -254,7 +254,7 @@ def simulate_event(
         bench_factor,
         captain_factor,
         vice_factor,
-        predictions_df,
+        event_predictions_df,
         elements_df,
     )
 
@@ -284,7 +284,7 @@ def simulate_event(
         transfers,
         bank,
         transfers_made,
-        event_predictions_df ,
+        event_predictions_df,
         results_df,
         elements_df,
     )
