@@ -144,7 +144,7 @@ def make_transfers(
         predictions_df, elements_df, event, event + events_to_look_ahead
     )
 
-    # when making a team from scratch we require 15 transfers
+    # when making a team from scratch we require 15 free transfers
     if event == 1:
         transfer_limit = 15
 
@@ -223,8 +223,8 @@ def simulate_event(
     elements_df = get_elements_df(season, event, client)
     update_player_values_with_selling_prices(elements_df, purchase_price_dict)
 
-    predictions_df = predictions_df.copy()
-    predictions_df = predictions_df.loc[predictions_df["prediction_event"] == event, :]
+    event_predictions_df = predictions_df.copy()
+    event_predictions_df  = event_predictions_df .loc[event_predictions_df ["prediction_event"] == event, :]
 
     existing_squad, total_budget, free_transfers_available = set_event_state(
         event, first_team, bench, bank, transfers_made, elements_df
@@ -284,7 +284,7 @@ def simulate_event(
         transfers,
         bank,
         transfers_made,
-        predictions_df,
+        event_predictions_df ,
         results_df,
         elements_df,
     )
@@ -363,7 +363,7 @@ def simulate_events(
             transfers,
             bank,
             transfers_made,
-            predictions_df,
+            event_predictions_df,
             results_df,
             elements_df,
         ) = simulate_event(
@@ -398,7 +398,7 @@ def simulate_events(
                 "transfers": transfers,
                 "bank": bank,
                 "transfers_made": transfers_made,
-                "predictions_df": predictions_df,
+                "predictions_df": event_predictions_df,
                 "results_df": results_df,
                 "elements_df": elements_df,
             }
