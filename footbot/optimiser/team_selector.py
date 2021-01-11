@@ -119,6 +119,10 @@ def construct_player_team_weights(players):
     return player_team_weights
 
 
+class NoOptimalTeamSelection(Exception):
+    pass
+
+
 def select_team(
     players,
     optimise_key="predicted_total_points",
@@ -214,6 +218,9 @@ def select_team(
     # solve optimisation problem
     squad_prob = cp.Problem(cp.Maximize(objective), constraints)
     squad_prob.solve(solver="GLPK_MI")
+
+    if squad_prob.status != "optimal":
+        raise NoOptimalTeamSelection("Unable to find optimal team selection")
 
     first_team = get_elements_from_vector(first_team_v.value, player_elements)
     bench = get_elements_from_vector(bench_v.value, player_elements)
