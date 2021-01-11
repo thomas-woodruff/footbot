@@ -200,6 +200,7 @@ def make_team_selection(
 
 
 def simulate_event(
+    *,
     season,
     event,
     purchase_price_dict,
@@ -321,6 +322,7 @@ def retrieve_or_save_predictions(
 
 
 def simulate_events(
+    *,
     season,
     events,
     get_predictions_df,
@@ -367,24 +369,24 @@ def simulate_events(
             results_df,
             elements_df,
         ) = simulate_event(
-            season,
-            event,
-            purchase_price_dict,
-            predictions_df,
-            first_team,
-            bench,
-            bank,
-            transfers_made,
-            events_to_look_ahead,
-            first_team_factor,
-            bench_factor,
-            captain_factor,
-            vice_factor,
-            transfer_penalty,
-            transfer_limit,
-            triple_captain,
-            bench_boost,
-            client,
+            season=season,
+            event=event,
+            purchase_price_dict=purchase_price_dict,
+            predictions_df=predictions_df,
+            first_team=first_team,
+            bench=bench,
+            bank=bank,
+            transfers_made=transfers_made,
+            events_to_look_ahead=events_to_look_ahead,
+            first_team_factor=first_team_factor,
+            bench_factor=bench_factor,
+            captain_factor=captain_factor,
+            vice_factor=vice_factor,
+            transfer_penalty=transfer_penalty,
+            transfer_limit=transfer_limit,
+            triple_captain=triple_captain,
+            bench_boost=bench_boost,
+            client=client,
         )
 
         simulation_results_arr.append(

@@ -1,12 +1,7 @@
-import os
-from pathlib import Path
-
 import pandas as pd
-import pytest
 
 from footbot.data.element_data import get_bootstrap
 from footbot.data.utils import run_query
-from footbot.data.utils import set_up_bigquery
 from footbot.data.utils import write_to_table
 
 
@@ -18,13 +13,7 @@ def test_get_bootstrap():
     assert isinstance(data["events"], list)
 
 
-def test_write_element_data_to_table():
-    secrets_path = os.path.join(
-        Path(__file__).parents[3], "secrets/service_account.json"
-    )
-
-    client = set_up_bigquery(secrets_path)
-
+def test_write_element_data_to_table(client):
     element_data_df = run_query(
         "SELECT * FROM `footbot-001.fpl.element_data_1920` ORDER BY element, current_event, datetime LIMIT 100",
         client,
