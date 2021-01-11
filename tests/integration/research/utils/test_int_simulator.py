@@ -120,7 +120,7 @@ def test_simulate_event(predictions_df, client):
         season="1920",
         event=1,
         purchase_price_dict={},
-        predictions_df=predictions_df,
+        all_predictions_df=predictions_df,
         first_team=None,
         bench=None,
         bank=None,
@@ -140,7 +140,7 @@ def test_simulate_event(predictions_df, client):
 
 def test_simulate_events_save_predictions(client):
 
-    simulate_events(
+    output = simulate_events(
         season=1920,
         events=[1, 2, 3],
         get_predictions_df=get_predictions_df,
@@ -157,6 +157,8 @@ def test_simulate_events_save_predictions(client):
         client=client,
     )
 
+    assert output
+
 
 def test_simulate_events_retrieve_predictions(client):
 
@@ -164,18 +166,7 @@ def test_simulate_events_retrieve_predictions(client):
     dataset = "integration_tests"
     table = "test_predictions_retrieve"
 
-    run_query(f"DELETE FROM `footbot-001.{dataset}.{table}` WHERE true", client)
-
-    for event in events:
-        df = get_predictions_df("1920", event, client)
-        write_to_table(
-            dataset,
-            table,
-            df,
-            client,
-        )
-
-    simulate_events(
+    simulation_results_arr = simulate_events(
         season=1920,
         events=events,
         get_predictions_df=get_predictions_df,
@@ -191,3 +182,7 @@ def test_simulate_events_retrieve_predictions(client):
         save_new_predictions=False,
         client=client,
     )
+
+    total_event_points = sum(i["event_points"] for i in simulation_results_arr)
+
+    assert total_event_points == 104
