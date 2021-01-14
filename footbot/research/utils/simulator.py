@@ -153,29 +153,48 @@ def get_points_calculator_input(
     return first_team_dicts, bench_dicts
 
 
-def set_event_state(event, first_team, bench, bank, transfers_made, elements_df):
+def set_event_state(
+    event,
+    existing_squad,
+    bank,
+    transfers_made,
+    free_hit,
+    revert_team,
+    existing_squad_revert,
+    elements_df,
+):
     """
     Set simulator variables based on previous gameweek simulations.
     :param event: Gameweek event
-    :param first_team: Array of elements representing first team
-    :param bench: Array of elements representing bench
+    :param existing_squad: Array of elements representing first team and bench
     :param bank: Budget in bank
     :param transfers_made: Number of transfers made in previous gameweek
+    :param free_hit: Boolean indicating whether to play free hit chip
+    :param revert_team: Boolean indicating whether to revert team due to free hit chip
+    :param existing_squad_revert: Array of elements representing squad to revert to
     :param elements_df: Dataframe of player metadata
     :return: Simulator variables for current simulation
     """
 
     if event == 1:
-        existing_squad = []
         total_budget = 1000
-        free_transfers_available = 1
+        free_transfers_available = 15
+        existing_squad = []
     else:
-        existing_squad = first_team + bench
-        team_value = calculate_team_value(first_team + bench, elements_df)
+        team_value = calculate_team_value(existing_squad, elements_df)
         total_budget = team_value + bank
         free_transfers_available = 2 if transfers_made == 0 else 1
+        if revert_team:
+            existing_squad = existing_squad_revert
+        if free_hit:
+            existing_squad_revert = existing_squad
 
-    return existing_squad, total_budget, free_transfers_available
+    return (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+    )
 
 
 def make_transfers(
@@ -189,6 +208,8 @@ def make_transfers(
     vice_factor,
     transfer_penalty,
     transfer_limit,
+    wildcard,
+    free_hit,
     predictions_df,
     elements_df,
 ):
@@ -204,6 +225,8 @@ def make_transfers(
     :param vice_factor: The probability the captain will not play
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
+    :param wildcard: Boolean indicating whether to play wildcard chip
+    :param free_hit: Boolean indicating whether to play free hit chip
     :param predictions_df: Dataframe of points predictions by player, gameweek
     :param elements_df: Dataframe of player metadata
     :return: Outcome of transfer decisions
@@ -213,9 +236,11 @@ def make_transfers(
         predictions_df, elements_df, event, event + events_to_look_ahead
     )
 
-    # when making a team from scratch we require 15 transfers
-    if event == 1:
+    # when making a team from scratch, we require 15 free transfers
+    # when playing a wildcard or free hit chip, we require 15 free transfers
+    if event == 1 or wildcard or free_hit:
         transfer_limit = 15
+        transfer_penalty = 0
 
     first_team, bench, _, _, transfers = select_team(
         players,
@@ -281,14 +306,55 @@ def make_team_selection(
     return first_team, bench, captain, vice
 
 
+def retrieve_or_save_predictions(
+    season, events, get_predictions_df, dataset, table, save_new_predictions, client
+):
+    """
+    Retrieve existing predictions from BigQuery or make new ones and save them to BigQuery.
+    :param season: Gameweek season
+    :param events: Gameweek events
+    :param get_predictions_df: Function to make predictions
+    :param dataset: BigQuery dataset to write to
+    :param table: BigQuery table to write to
+    :param save_new_predictions: Boolean indicating whether new predictions should be made
+    :param client: BigQuery client
+    :return: Dataframe of points predictions by player, gameweek, prediction event
+    """
+
+    table_id = f"footbot-001.{dataset}.{table}"
+
+    if save_new_predictions:
+        run_query(f"DELETE FROM `{table_id}` WHERE true", client)
+
+        predictions_df_arr = []
+
+        for event in events:
+            logger.info(f"writing predictions as of event {event}")
+            predictions_df = get_predictions_df(season, event, client)
+            predictions_df["prediction_event"] = event
+            write_to_table(
+                dataset,
+                table,
+                predictions_df,
+                client,
+            )
+            predictions_df_arr.append(predictions_df)
+
+        all_predictions_df = pd.concat(predictions_df_arr)
+        return all_predictions_df
+    else:
+        all_predictions_df = run_query(f"SELECT * FROM `{table_id}`", client)
+
+        return all_predictions_df
+
+
 def simulate_event(
     *,
     season,
     event,
     purchase_price_dict,
     all_predictions_df,
-    first_team,
-    bench,
+    existing_squad,
     bank,
     transfers_made,
     events_to_look_ahead,
@@ -298,6 +364,10 @@ def simulate_event(
     vice_factor,
     transfer_penalty,
     transfer_limit,
+    wildcard,
+    free_hit,
+    revert_team,
+    existing_squad_revert,
     triple_captain,
     bench_boost,
     client,
@@ -308,8 +378,7 @@ def simulate_event(
     :param event: Gameweek event
     :param purchase_price_dict: Dictionary of purchase prices of players in the squad
     :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
-    :param first_team: Array of elements representing first team from previous gameweek simulation
-    :param bench: Array of elements representing bench from previous gameweek simulation
+    :param existing_squad: Array of elements representing squad from previous gameweek simulation
     :param bank: :param bank: Budget in bank
     :param transfers_made: Number of transfers made in previous gameweek
     :param events_to_look_ahead: Number of future gameweeks to consider
@@ -319,6 +388,10 @@ def simulate_event(
     :param vice_factor: The probability the captain will not play
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
+    :param wildcard: Boolean indicating whether to play wildcard chip
+    :param free_hit: Boolean indicating whether to play free hit chip
+    :param revert_team: Boolean indicating whether to revert team due to free hit chip
+    :param existing_squad_revert: Array of elements representing squad to revert to
     :param triple_captain: Boolean indicating whether to play triple captain chip
     :param bench_boost: Boolean indicating whether to play bench boost chip
     :param client: BigQuery client
@@ -331,8 +404,20 @@ def simulate_event(
     predictions_df = all_predictions_df.copy()
     predictions_df = predictions_df.loc[predictions_df["prediction_event"] == event, :]
 
-    existing_squad, total_budget, free_transfers_available = set_event_state(
-        event, first_team, bench, bank, transfers_made, elements_df
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+    ) = set_event_state(
+        event,
+        existing_squad,
+        bank,
+        transfers_made,
+        free_hit,
+        revert_team,
+        existing_squad_revert,
+        elements_df,
     )
 
     existing_squad, bank, transfers = make_transfers(
@@ -346,6 +431,8 @@ def simulate_event(
         vice_factor,
         transfer_penalty,
         transfer_limit,
+        wildcard,
+        free_hit,
         predictions_df,
         elements_df,
     )
@@ -389,52 +476,11 @@ def simulate_event(
         transfers,
         bank,
         transfers_made,
+        existing_squad_revert,
         predictions_df,
         results_df,
         elements_df,
     )
-
-
-def retrieve_or_save_predictions(
-    season, events, get_predictions_df, dataset, table, save_new_predictions, client
-):
-    """
-    Retrieve existing predictions from BigQuery or make new ones and save them to BigQuery.
-    :param season: Gameweek season
-    :param events: Gameweek events
-    :param get_predictions_df: Function to make predictions
-    :param dataset: BigQuery dataset to write to
-    :param table: BigQuery table to write to
-    :param save_new_predictions: Boolean indicating whether new predictions should be made
-    :param client: BigQuery client
-    :return: Dataframe of points predictions by player, gameweek, prediction event
-    """
-
-    table_id = f"footbot-001.{dataset}.{table}"
-
-    if save_new_predictions:
-        run_query(f"DELETE FROM `{table_id}` WHERE true", client)
-
-        predictions_df_arr = []
-
-        for event in events:
-            logger.info(f"writing predictions as of event {event}")
-            predictions_df = get_predictions_df(season, event, client)
-            predictions_df["prediction_event"] = event
-            write_to_table(
-                dataset,
-                table,
-                predictions_df,
-                client,
-            )
-            predictions_df_arr.append(predictions_df)
-
-        all_predictions_df = pd.concat(predictions_df_arr)
-        return all_predictions_df
-    else:
-        all_predictions_df = run_query(f"SELECT * FROM `{table_id}`", client)
-
-        return all_predictions_df
 
 
 def simulate_events(
@@ -449,6 +495,10 @@ def simulate_events(
     vice_factor,
     transfer_penalty,
     transfer_limit,
+    wildcard_events,
+    free_hit_events,
+    triple_captain_events,
+    bench_boost_events,
     dataset,
     table,
     save_new_predictions,
@@ -466,27 +516,58 @@ def simulate_events(
     :param vice_factor: The probability the captain will not play
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
+    :param wildcard_events: Array of events on which to play wildcard chips
+    :param free_hit_events: Array of events on which to play free hit chips
+    :param triple_captain_events: Array of events on which to play triple captain chips
+    :param bench_boost_events: Array of events on which to play bench boost chips
     :param dataset: BigQuery dataset to write to
     :param table: BigQuery table to write to
     :param save_new_predictions: Boolean indicating whether new predictions should be made
     :param client: BigQuery client
     :return: Simulation outcomes
     """
+
+    if events[0] != 1:
+        raise Exception("simulation must start at event 1")
+
     all_predictions_df = retrieve_or_save_predictions(
         season, events, get_predictions_df, dataset, table, save_new_predictions, client
     )
 
     purchase_price_dict = {}
-    first_team = None
-    bench = None
+    first_team = []
+    bench = []
     bank = None
     transfers_made = None
+    wildcard = False
+    free_hit = False
+    revert_team = False
+    existing_squad_revert = []
     triple_captain = False
     bench_boost = False
 
     simulation_results_arr = []
 
     for event in events:
+
+        if event in wildcard_events:
+            if event == 1:
+                raise Exception("wildcard chip cannot be played on first event")
+            wildcard = True
+
+        if event in free_hit_events:
+            if event == 1:
+                raise Exception("free hit chip cannot be played on first event")
+            free_hit = True
+
+        if event - 1 in free_hit_events:
+            revert_team = True
+
+        if event in triple_captain_events:
+            triple_captain = True
+
+        if event in bench_boost_events:
+            bench_boost = True
 
         logger.info(f"simulating event {event}")
 
@@ -499,6 +580,7 @@ def simulate_events(
             transfers,
             bank,
             transfers_made,
+            existing_squad_revert,
             predictions_df,
             results_df,
             elements_df,
@@ -507,8 +589,7 @@ def simulate_events(
             event=event,
             purchase_price_dict=purchase_price_dict,
             all_predictions_df=all_predictions_df,
-            first_team=first_team,
-            bench=bench,
+            existing_squad=first_team+bench,
             bank=bank,
             transfers_made=transfers_made,
             events_to_look_ahead=events_to_look_ahead,
@@ -518,6 +599,10 @@ def simulate_events(
             vice_factor=vice_factor,
             transfer_penalty=transfer_penalty,
             transfer_limit=transfer_limit,
+            wildcard=wildcard,
+            free_hit=free_hit,
+            revert_team=revert_team,
+            existing_squad_revert=existing_squad_revert,
             triple_captain=triple_captain,
             bench_boost=bench_boost,
             client=client,
