@@ -119,3 +119,13 @@ def test_calculate_points_triple_captain(first_team, bench):
 
 def test_calculate_points_bench_boost(first_team, bench):
     assert calculate_points(first_team, bench, 1, 1, bench_boost=True) == 16
+
+
+def test_calculate_points_wildcard(first_team, bench):
+
+    assert calculate_points(first_team, bench, 15, 0, wildcard=True) == 12
+
+
+def test_calculate_points_free_hit(first_team, bench):
+
+    assert calculate_points(first_team, bench, 15, 0, free_hit=True) == 12

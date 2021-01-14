@@ -383,7 +383,7 @@ def test_set_event_state_first_event(elements_df):
     assert set_event_state(1, [], None, None, False, False, [], elements_df,) == (
         [],
         1000,
-        1,
+        15,
         [],
     )
 

@@ -3,6 +3,8 @@ def calculate_points(
     bench_dicts,
     transfers_made,
     free_transfers_available,
+    wildcard=False,
+    free_hit=False,
     triple_captain=False,
     bench_boost=False,
 ):
@@ -16,6 +18,8 @@ def calculate_points(
     :param bench_dicts: Array of dicts representing bench
     :param transfers_made: Number of transfers made
     :param free_transfers_available: Number of free transfers available
+    :param wildcard: Boolean indicating use of wildcard chip
+    :param free_hit: Boolean indicating use of free hit chip
     :param triple_captain: Boolean indicating use of triple captain chip
     :param bench_boost: Boolean indicating use of bench boost chip
     :return: Total points
@@ -43,6 +47,9 @@ def calculate_points(
     else:
         bench_points = 0
 
-    transfer_points = min(-4 * (transfers_made - free_transfers_available), 0)
+    if wildcard or free_hit:
+        transfer_points = 0
+    else:
+        transfer_points = min(-4 * (transfers_made - free_transfers_available), 0)
 
     return first_team_points + captain_points + bench_points + transfer_points

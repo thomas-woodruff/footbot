@@ -324,24 +324,34 @@ def retrieve_or_save_predictions(
     table_id = f"footbot-001.{dataset}.{table}"
 
     if save_new_predictions:
-        run_query(f"DELETE FROM `{table_id}` WHERE true", client)
 
         predictions_df_arr = []
 
         for event in events:
             logger.info(f"writing predictions as of event {event}")
+
             predictions_df = get_predictions_df(season, event, client)
+
+            if event == events[0]:
+                write_disposition = "WRITE_TRUNCATE"
+            else:
+                write_disposition = "WRITE_APPEND"
+
             predictions_df["prediction_event"] = event
+
             write_to_table(
                 dataset,
                 table,
                 predictions_df,
                 client,
+                write_disposition=write_disposition,
             )
             predictions_df_arr.append(predictions_df)
 
         all_predictions_df = pd.concat(predictions_df_arr)
+
         return all_predictions_df
+
     else:
         all_predictions_df = run_query(f"SELECT * FROM `{table_id}`", client)
 
@@ -358,6 +368,7 @@ def simulate_event(
     bank,
     transfers_made,
     events_to_look_ahead,
+    events_to_look_ahead_from_scratch,
     first_team_factor,
     bench_factor,
     captain_factor,
@@ -365,7 +376,9 @@ def simulate_event(
     transfer_penalty,
     transfer_limit,
     wildcard,
+    events_to_look_ahead_wildcard,
     free_hit,
+    events_to_look_ahead_free_hit,
     revert_team,
     existing_squad_revert,
     triple_captain,
@@ -379,9 +392,11 @@ def simulate_event(
     :param purchase_price_dict: Dictionary of purchase prices of players in the squad
     :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
     :param existing_squad: Array of elements representing squad from previous gameweek simulation
-    :param bank: :param bank: Budget in bank
+    :param bank: Budget in bank
     :param transfers_made: Number of transfers made in previous gameweek
     :param events_to_look_ahead: Number of future gameweeks to consider
+    :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
+    team from scratch
     :param first_team_factor: The probability a player on the first team will play
     :param bench_factor: The probability a player on the bench will play
     :param captain_factor: The probability the captain will play
@@ -389,7 +404,11 @@ def simulate_event(
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
     :param wildcard: Boolean indicating whether to play wildcard chip
+    :param events_to_look_ahead_wildcard: Number of future gameweeks to consider when using
+    wildcard chip
     :param free_hit: Boolean indicating whether to play free hit chip
+    :param events_to_look_ahead_free_hit: Number of future gameweeks to consider when using free
+    hit chip
     :param revert_team: Boolean indicating whether to revert team due to free hit chip
     :param existing_squad_revert: Array of elements representing squad to revert to
     :param triple_captain: Boolean indicating whether to play triple captain chip
@@ -419,6 +438,13 @@ def simulate_event(
         existing_squad_revert,
         elements_df,
     )
+
+    if wildcard:
+        events_to_look_ahead = events_to_look_ahead_wildcard
+    if free_hit:
+        events_to_look_ahead = events_to_look_ahead_free_hit
+    if event == 1:
+        events_to_look_ahead = events_to_look_ahead_from_scratch
 
     existing_squad, bank, transfers = make_transfers(
         event,
@@ -463,6 +489,8 @@ def simulate_event(
         bench_dicts,
         transfers_made,
         free_transfers_available,
+        wildcard=wildcard,
+        free_hit=free_hit,
         triple_captain=triple_captain,
         bench_boost=bench_boost,
     )
@@ -489,6 +517,7 @@ def simulate_events(
     events,
     get_predictions_df,
     events_to_look_ahead,
+    events_to_look_ahead_from_scratch,
     first_team_factor,
     bench_factor,
     captain_factor,
@@ -496,7 +525,9 @@ def simulate_events(
     transfer_penalty,
     transfer_limit,
     wildcard_events,
+    events_to_look_ahead_wildcard,
     free_hit_events,
+    events_to_look_ahead_free_hit,
     triple_captain_events,
     bench_boost_events,
     dataset,
@@ -510,6 +541,8 @@ def simulate_events(
     :param events: Gameweek events
     :param get_predictions_df:
     :param events_to_look_ahead: Number of future gameweeks to consider
+    :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
+    team from scratch
     :param first_team_factor: The probability a player on the first team will play
     :param bench_factor: The probability a player on the bench will play
     :param captain_factor: The probability the captain will play
@@ -517,7 +550,11 @@ def simulate_events(
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
     :param wildcard_events: Array of events on which to play wildcard chips
+    :param events_to_look_ahead_wildcard: Number of future gameweeks to consider when using
+    wildcard chip
     :param free_hit_events: Array of events on which to play free hit chips
+    :param events_to_look_ahead_free_hit: Number of future gameweeks to consider when using free
+    hit chip
     :param triple_captain_events: Array of events on which to play triple captain chips
     :param bench_boost_events: Array of events on which to play bench boost chips
     :param dataset: BigQuery dataset to write to
@@ -589,10 +626,11 @@ def simulate_events(
             event=event,
             purchase_price_dict=purchase_price_dict,
             all_predictions_df=all_predictions_df,
-            existing_squad=first_team+bench,
+            existing_squad=first_team + bench,
             bank=bank,
             transfers_made=transfers_made,
             events_to_look_ahead=events_to_look_ahead,
+            events_to_look_ahead_from_scratch=events_to_look_ahead_from_scratch,
             first_team_factor=first_team_factor,
             bench_factor=bench_factor,
             captain_factor=captain_factor,
@@ -600,7 +638,9 @@ def simulate_events(
             transfer_penalty=transfer_penalty,
             transfer_limit=transfer_limit,
             wildcard=wildcard,
+            events_to_look_ahead_wildcard=events_to_look_ahead_wildcard,
             free_hit=free_hit,
+            events_to_look_ahead_free_hit=events_to_look_ahead_free_hit,
             revert_team=revert_team,
             existing_squad_revert=existing_squad_revert,
             triple_captain=triple_captain,

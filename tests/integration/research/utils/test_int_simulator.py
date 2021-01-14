@@ -8,7 +8,6 @@ from footbot.research.utils.simulator import make_transfers
 from footbot.research.utils.simulator import simulate_event
 from footbot.research.utils.simulator import simulate_events
 
-
 test_season = "1920"
 test_event = 1
 test_events = [1, 2, 3]
@@ -22,7 +21,13 @@ def elements_df(client):
 
 def test_get_elements_df(elements_df):
 
-    assert set(elements_df.columns) == {"element_all", "safe_web_name", "element_type", "team", "value"}
+    assert set(elements_df.columns) == {
+        "element_all",
+        "safe_web_name",
+        "element_type",
+        "team",
+        "value",
+    }
     assert len(elements_df) == 558
     assert len(elements_df["element_all"]) == len(
         elements_df["element_all"].drop_duplicates()
@@ -85,7 +90,23 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
     existing_squad, bank, transfers = make_transfers(
         event=test_event,
         events_to_look_ahead=0,
-        existing_squad=[991, 396, 742, 116, 181, 127, 1266, 1271, 941, 582, 1138, 324, 1099, 800, 982],
+        existing_squad=[
+            213,
+            78,
+            1175,
+            295,
+            753,
+            1105,
+            1200,
+            266,
+            512,
+            394,
+            312,
+            463,
+            401,
+            717,
+            118,
+        ],
         total_budget=1000,
         first_team_factor=0.9,
         bench_factor=0.1,
@@ -106,7 +127,23 @@ def test_make_team_selection(elements_df, predictions_df):
 
     first_team, bench, captain, vice = make_team_selection(
         event=test_event,
-        existing_squad=[991, 396, 742, 116, 181, 127, 1266, 1271, 941, 582, 1138, 324, 1099, 800, 982],
+        existing_squad=[
+            213,
+            78,
+            1175,
+            295,
+            753,
+            1105,
+            1200,
+            266,
+            512,
+            394,
+            312,
+            463,
+            401,
+            717,
+            118,
+        ],
         total_budget=1000,
         first_team_factor=0.9,
         bench_factor=0.1,
@@ -133,6 +170,7 @@ def test_simulate_event(predictions_df, client):
         bank=None,
         transfers_made=None,
         events_to_look_ahead=0,
+        events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
         bench_factor=0.1,
         captain_factor=0.9,
@@ -140,7 +178,9 @@ def test_simulate_event(predictions_df, client):
         transfer_penalty=0,
         transfer_limit=1,
         wildcard=False,
+        events_to_look_ahead_wildcard=0,
         free_hit=False,
+        events_to_look_ahead_free_hit=0,
         revert_team=False,
         existing_squad_revert=[],
         triple_captain=False,
@@ -158,6 +198,7 @@ def test_simulate_events_save_predictions(client):
         events=test_events,
         get_predictions_df=get_predictions_df,
         events_to_look_ahead=0,
+        events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
         bench_factor=0.1,
         captain_factor=0.9,
@@ -165,7 +206,9 @@ def test_simulate_events_save_predictions(client):
         transfer_penalty=0,
         transfer_limit=1,
         wildcard_events=[],
+        events_to_look_ahead_wildcard=0,
         free_hit_events=[],
+        events_to_look_ahead_free_hit=0,
         triple_captain_events=[],
         bench_boost_events=[],
         dataset=dataset,
@@ -184,6 +227,7 @@ def test_simulate_events_retrieve_predictions(client):
         events=test_events,
         get_predictions_df=get_predictions_df,
         events_to_look_ahead=0,
+        events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
         bench_factor=0.1,
         captain_factor=0.9,
@@ -191,7 +235,9 @@ def test_simulate_events_retrieve_predictions(client):
         transfer_penalty=0,
         transfer_limit=1,
         wildcard_events=[],
+        events_to_look_ahead_wildcard=0,
         free_hit_events=[],
+        events_to_look_ahead_free_hit=0,
         triple_captain_events=[],
         bench_boost_events=[],
         dataset=dataset,
@@ -202,4 +248,4 @@ def test_simulate_events_retrieve_predictions(client):
 
     total_event_points = sum(i["event_points"] for i in simulation_results_arr)
 
-    assert total_event_points == 104
+    assert total_event_points == 160
