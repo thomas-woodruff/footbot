@@ -8,5 +8,6 @@ setup(
         'footbot.data',
         'footbot.optimiser',
         'footbot.predictor'
-    ]
+    ],
+    install_requires=open('requirements.txt').readlines()
 )
