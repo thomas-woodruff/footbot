@@ -76,8 +76,6 @@ def test_make_transfers_from_scratch(elements_df, predictions_df):
         vice_factor=0.1,
         transfer_penalty=0,
         transfer_limit=15,
-        wildcard=False,
-        free_hit=False,
         predictions_df=predictions_df,
         elements_df=elements_df,
     )
@@ -114,8 +112,6 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
         vice_factor=0.1,
         transfer_penalty=0,
         transfer_limit=1,
-        wildcard=False,
-        free_hit=False,
         predictions_df=predictions_df,
         elements_df=elements_df,
     )
@@ -177,14 +173,12 @@ def test_simulate_event(predictions_df, client):
         vice_factor=0.1,
         transfer_penalty=0,
         transfer_limit=1,
-        wildcard=False,
+        wildcard_events=[],
         events_to_look_ahead_wildcard=0,
-        free_hit=False,
-        events_to_look_ahead_free_hit=0,
-        revert_team=False,
+        free_hit_events=[],
         existing_squad_revert=[],
-        triple_captain=False,
-        bench_boost=False,
+        triple_captain_events=[],
+        bench_boost_events=[],
         client=client,
     )
 
@@ -208,7 +202,6 @@ def test_simulate_events_save_predictions(client):
         wildcard_events=[],
         events_to_look_ahead_wildcard=0,
         free_hit_events=[],
-        events_to_look_ahead_free_hit=0,
         triple_captain_events=[],
         bench_boost_events=[],
         dataset=dataset,
@@ -237,7 +230,6 @@ def test_simulate_events_retrieve_predictions(client):
         wildcard_events=[],
         events_to_look_ahead_wildcard=0,
         free_hit_events=[],
-        events_to_look_ahead_free_hit=0,
         triple_captain_events=[],
         bench_boost_events=[],
         dataset=dataset,
@@ -249,3 +241,69 @@ def test_simulate_events_retrieve_predictions(client):
     total_event_points = sum(i["event_points"] for i in simulation_results_arr)
 
     assert total_event_points == 160
+
+
+def test_simulate_events_wildcard(client):
+
+    simulation_results_arr = simulate_events(
+        season=test_season,
+        events=test_events,
+        get_predictions_df=get_predictions_df,
+        events_to_look_ahead=0,
+        events_to_look_ahead_from_scratch=0,
+        first_team_factor=0.9,
+        bench_factor=0.1,
+        captain_factor=0.9,
+        vice_factor=0.1,
+        transfer_penalty=0,
+        transfer_limit=0,
+        wildcard_events=[2],
+        events_to_look_ahead_wildcard=0,
+        free_hit_events=[],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        dataset=dataset,
+        table="test_predictions_retrieve",
+        save_new_predictions=False,
+        client=client,
+    )
+
+    squad_event_1 = simulation_results_arr[0]['first_team'] + simulation_results_arr[0]['bench']
+    squad_event_2 = simulation_results_arr[1]['first_team'] + simulation_results_arr[1]['bench']
+    squad_event_3 = simulation_results_arr[2]['first_team'] + simulation_results_arr[2]['bench']
+
+    assert set(squad_event_1) != set(squad_event_2)
+    assert set(squad_event_2) == set(squad_event_3)  # we enforce no transfers
+
+
+def test_simulate_events_free_hit(client):
+
+    simulation_results_arr = simulate_events(
+        season=test_season,
+        events=test_events,
+        get_predictions_df=get_predictions_df,
+        events_to_look_ahead=0,
+        events_to_look_ahead_from_scratch=0,
+        first_team_factor=0.9,
+        bench_factor=0.1,
+        captain_factor=0.9,
+        vice_factor=0.1,
+        transfer_penalty=0,
+        transfer_limit=0,
+        wildcard_events=[],
+        events_to_look_ahead_wildcard=0,
+        free_hit_events=[2],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        dataset=dataset,
+        table="test_predictions_retrieve",
+        save_new_predictions=False,
+        client=client,
+    )
+
+    squad_event_1 = simulation_results_arr[0]['first_team'] + simulation_results_arr[0]['bench']
+    squad_event_2 = simulation_results_arr[1]['first_team'] + simulation_results_arr[1]['bench']
+    squad_event_3 = simulation_results_arr[2]['first_team'] + simulation_results_arr[2]['bench']
+
+    assert set(squad_event_1) == set(squad_event_3)  # we enforce no transfers
+    assert set(squad_event_1) != set(squad_event_2)

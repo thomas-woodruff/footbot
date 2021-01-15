@@ -380,88 +380,388 @@ def predictions_df():
 
 def test_set_event_state_first_event(elements_df):
 
-    assert set_event_state(1, [], None, None, False, False, [], elements_df,) == (
-        [],
-        1000,
-        15,
-        [],
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=1,
+        existing_squad=[],
+        bank=None,
+        transfers_made=None,
+        wildcard_events=[],
+        free_hit_events=[],
+        existing_squad_revert=[],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
     )
+
+    assert existing_squad == []
+    assert total_budget == 1000
+    assert free_transfers_available == 15
+    assert existing_squad_revert == []
+    assert not triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 5
+    assert transfer_penalty == 0
+    assert transfer_limit == 15
 
 
 def test_set_event_state_single_transfer(elements_df):
 
-    assert set_event_state(
-        2,
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        400,
-        1,
-        False,
-        False,
-        [],
-        elements_df,
-    ) == (
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        1000,
-        1,
-        [],
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=2,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        bank=400,
+        transfers_made=1,
+        wildcard_events=[],
+        free_hit_events=[],
+        existing_squad_revert=[],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
     )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 1
+    assert existing_squad_revert == []
+    assert not triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 1
+    assert transfer_penalty == 4
+    assert transfer_limit == 1
 
 
 def test_set_event_state_no_transfers(elements_df):
 
-    assert set_event_state(
-        2,
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        400,
-        0,
-        False,
-        False,
-        [],
-        elements_df,
-    ) == (
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        1000,
-        2,
-        [],
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=2,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        bank=400,
+        transfers_made=0,
+        wildcard_events=[],
+        free_hit_events=[],
+        existing_squad_revert=[],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
     )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 2
+    assert existing_squad_revert == []
+    assert not triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 1
+    assert transfer_penalty == 4
+    assert transfer_limit == 1
 
 
 def test_set_event_state_many_transfers(elements_df):
 
-    assert set_event_state(
-        2,
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        400,
-        3,
-        False,
-        False,
-        [],
-        elements_df,
-    ) == (
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-        1000,
-        1,
-        [],
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=2,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        bank=400,
+        transfers_made=2,
+        wildcard_events=[],
+        free_hit_events=[],
+        existing_squad_revert=[],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
     )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 1
+    assert existing_squad_revert == []
+    assert not triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 1
+    assert transfer_penalty == 4
+    assert transfer_limit == 1
+
+
+def test_set_event_state_wildcard(elements_df):
+
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=2,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        bank=400,
+        transfers_made=2,
+        wildcard_events=[2],
+        free_hit_events=[],
+        existing_squad_revert=[],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
+    )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 15
+    assert existing_squad_revert == []
+    assert not triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 2
+    assert transfer_penalty == 0
+    assert transfer_limit == 15
+
+
+def test_set_event_state_free_hit(elements_df):
+
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=2,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        bank=400,
+        transfers_made=2,
+        wildcard_events=[],
+        free_hit_events=[2],
+        existing_squad_revert=[],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
+    )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 15
+    assert existing_squad_revert == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert not triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 0
+    assert transfer_penalty == 0
+    assert transfer_limit == 15
+
+
+def test_set_event_state_revert_team(elements_df):
+
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=3,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 17, 18, 19, 20],
+        bank=400,
+        transfers_made=2,
+        wildcard_events=[],
+        free_hit_events=[2],
+        existing_squad_revert=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        triple_captain_events=[],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
+    )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 1
+    assert existing_squad_revert == []
+    assert not triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 1
+    assert transfer_penalty == 4
+    assert transfer_limit == 1
+
+
+def test_set_event_state_triple_captain(elements_df):
+
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=2,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        bank=400,
+        transfers_made=2,
+        wildcard_events=[],
+        free_hit_events=[],
+        existing_squad_revert=[],
+        triple_captain_events=[2],
+        bench_boost_events=[],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
+    )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 1
+    assert existing_squad_revert == []
+    assert triple_captain
+    assert not bench_boost
+    assert events_to_look_ahead == 1
+    assert transfer_penalty == 4
+    assert transfer_limit == 1
+
+
+def test_set_event_state_bench_boost(elements_df):
+
+    (
+        existing_squad,
+        total_budget,
+        free_transfers_available,
+        existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
+    ) = set_event_state(
+        event=2,
+        existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        bank=400,
+        transfers_made=2,
+        wildcard_events=[],
+        free_hit_events=[],
+        existing_squad_revert=[],
+        triple_captain_events=[],
+        bench_boost_events=[2],
+        events_to_look_ahead=1,
+        events_to_look_ahead_from_scratch=5,
+        events_to_look_ahead_wildcard=2,
+        transfer_penalty=4,
+        transfer_limit=1,
+        elements_df=elements_df,
+    )
+
+    assert existing_squad == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    assert total_budget == 1000
+    assert free_transfers_available == 1
+    assert existing_squad_revert == []
+    assert not triple_captain
+    assert bench_boost
+    assert events_to_look_ahead == 1
+    assert transfer_penalty == 4
+    assert transfer_limit == 1
 
 
 def test_make_transfers_from_scratch(elements_df, predictions_df):
 
     existing_squad, bank, transfers = make_transfers(
-        1,
-        0,
-        [],
-        600,
-        0.9,
-        0.1,
-        0.9,
-        0.1,
-        0,
-        15,
-        False,
-        False,
-        predictions_df,
-        elements_df,
+        event=1,
+        events_to_look_ahead=1,
+        existing_squad=[],
+        total_budget=600,
+        first_team_factor=0.9,
+        bench_factor=0.1,
+        captain_factor=0.9,
+        vice_factor=0.1,
+        transfer_penalty=0,
+        transfer_limit=15,
+        predictions_df=predictions_df,
+        elements_df=elements_df,
     )
 
     assert set(existing_squad) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11}
@@ -475,74 +775,18 @@ def test_make_transfers_from_scratch(elements_df, predictions_df):
 def test_make_transfers_from_existing(elements_df, predictions_df):
 
     existing_squad, bank, transfers = make_transfers(
-        1,
-        0,
-        [1, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
-        600,
-        0.9,
-        0.1,
-        0.9,
-        0.1,
-        0,
-        1,
-        False,
-        False,
-        predictions_df,
-        elements_df,
-    )
-
-    assert set(existing_squad) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11}
-    assert bank == 0
-    assert transfers == {
-        "transfers_in": {3},
-        "transfers_out": {1},
-    }
-
-
-def test_make_transfers_wildcard(elements_df, predictions_df):
-
-    existing_squad, bank, transfers = make_transfers(
-        1,
-        0,
-        [1, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
-        600,
-        0.9,
-        0.1,
-        0.9,
-        0.1,
-        0,
-        0,
-        True,
-        False,
-        predictions_df,
-        elements_df,
-    )
-
-    assert set(existing_squad) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11}
-    assert bank == 0
-    assert transfers == {
-        "transfers_in": {3},
-        "transfers_out": {1},
-    }
-
-
-def test_make_transfers_free_hit(elements_df, predictions_df):
-
-    existing_squad, bank, transfers = make_transfers(
-        1,
-        0,
-        [1, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
-        600,
-        0.9,
-        0.1,
-        0.9,
-        0.1,
-        0,
-        0,
-        False,
-        True,
-        predictions_df,
-        elements_df,
+        event=1,
+        events_to_look_ahead=1,
+        existing_squad=[1, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
+        total_budget=600,
+        first_team_factor=0.9,
+        bench_factor=0.1,
+        captain_factor=0.9,
+        vice_factor=0.1,
+        transfer_penalty=0,
+        transfer_limit=1,
+        predictions_df=predictions_df,
+        elements_df=elements_df,
     )
 
     assert set(existing_squad) == {3, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11}
