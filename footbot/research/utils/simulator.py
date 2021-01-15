@@ -158,9 +158,16 @@ def set_event_state(
     existing_squad,
     bank,
     transfers_made,
-    free_hit,
-    revert_team,
+    wildcard_events,
+    free_hit_events,
     existing_squad_revert,
+    triple_captain_events,
+    bench_boost_events,
+    events_to_look_ahead,
+    events_to_look_ahead_from_scratch,
+    events_to_look_ahead_wildcard,
+    transfer_penalty,
+    transfer_limit,
     elements_df,
 ):
     """
@@ -169,9 +176,20 @@ def set_event_state(
     :param existing_squad: Array of elements representing first team and bench
     :param bank: Budget in bank
     :param transfers_made: Number of transfers made in previous gameweek
-    :param free_hit: Boolean indicating whether to play free hit chip
-    :param revert_team: Boolean indicating whether to revert team due to free hit chip
+    :param wildcard_events: Array of events on which to play wildcard chips
+    :param events_to_look_ahead_wildcard: Number of future gameweeks to consider when using
+    wildcard chip
+    :param free_hit_events: Array of events on which to play free hit chips
     :param existing_squad_revert: Array of elements representing squad to revert to
+    :param triple_captain_events: Array of events on which to play triple captain chips
+    :param bench_boost_events: Array of events on which to play bench boost chips
+    :param events_to_look_ahead: Number of future gameweeks to consider
+    :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
+    team from scratch
+    :param events_to_look_ahead_wildcard: Number of future gameweeks to consider when using
+    wildcard chip
+    :param transfer_penalty: The cost in points of transferring a player
+    :param transfer_limit: The limit to the number of transfers that can be made
     :param elements_df: Dataframe of player metadata
     :return: Simulator variables for current simulation
     """
@@ -180,20 +198,55 @@ def set_event_state(
         total_budget = 1000
         free_transfers_available = 15
         existing_squad = []
+        events_to_look_ahead = events_to_look_ahead_from_scratch
+        transfer_limit = 15
+        transfer_penalty = 0
     else:
         team_value = calculate_team_value(existing_squad, elements_df)
         total_budget = team_value + bank
         free_transfers_available = 2 if transfers_made == 0 else 1
-        if revert_team:
-            existing_squad = existing_squad_revert
-        if free_hit:
-            existing_squad_revert = existing_squad
+
+    if event in wildcard_events:
+        if event == 1:
+            raise Exception("wildcard chip cannot be played on first event")
+        free_transfers_available = 15
+        events_to_look_ahead = events_to_look_ahead_wildcard
+        transfer_limit = 15
+        transfer_penalty = 0
+
+    if event in free_hit_events:
+        if event == 1:
+            raise Exception("free hit chip cannot be played on first event")
+        free_transfers_available = 15
+        events_to_look_ahead = 0
+        existing_squad_revert = existing_squad.copy()
+        transfer_limit = 15
+        transfer_penalty = 0
+
+    if event - 1 in free_hit_events:
+        existing_squad = existing_squad_revert.copy()
+        existing_squad_revert = []
+
+    if event in triple_captain_events:
+        triple_captain = True
+    else:
+        triple_captain = False
+
+    if event in bench_boost_events:
+        bench_boost = True
+    else:
+        bench_boost = False
 
     return (
         existing_squad,
         total_budget,
         free_transfers_available,
         existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
     )
 
 
@@ -208,8 +261,6 @@ def make_transfers(
     vice_factor,
     transfer_penalty,
     transfer_limit,
-    wildcard,
-    free_hit,
     predictions_df,
     elements_df,
 ):
@@ -225,8 +276,6 @@ def make_transfers(
     :param vice_factor: The probability the captain will not play
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
-    :param wildcard: Boolean indicating whether to play wildcard chip
-    :param free_hit: Boolean indicating whether to play free hit chip
     :param predictions_df: Dataframe of points predictions by player, gameweek
     :param elements_df: Dataframe of player metadata
     :return: Outcome of transfer decisions
@@ -235,12 +284,6 @@ def make_transfers(
     players = get_team_selector_input(
         predictions_df, elements_df, event, event + events_to_look_ahead
     )
-
-    # when making a team from scratch, we require 15 free transfers
-    # when playing a wildcard or free hit chip, we require 15 free transfers
-    if event == 1 or wildcard or free_hit:
-        transfer_limit = 15
-        transfer_penalty = 0
 
     first_team, bench, _, _, transfers = select_team(
         players,
@@ -375,14 +418,12 @@ def simulate_event(
     vice_factor,
     transfer_penalty,
     transfer_limit,
-    wildcard,
+    wildcard_events,
     events_to_look_ahead_wildcard,
-    free_hit,
-    events_to_look_ahead_free_hit,
-    revert_team,
+    free_hit_events,
     existing_squad_revert,
-    triple_captain,
-    bench_boost,
+    triple_captain_events,
+    bench_boost_events,
     client,
 ):
     """
@@ -403,16 +444,13 @@ def simulate_event(
     :param vice_factor: The probability the captain will not play
     :param transfer_penalty: The cost in points of transferring a player
     :param transfer_limit: The limit to the number of transfers that can be made
-    :param wildcard: Boolean indicating whether to play wildcard chip
+    :param wildcard_events: Array of events on which to play wildcard chips
     :param events_to_look_ahead_wildcard: Number of future gameweeks to consider when using
     wildcard chip
-    :param free_hit: Boolean indicating whether to play free hit chip
-    :param events_to_look_ahead_free_hit: Number of future gameweeks to consider when using free
-    hit chip
-    :param revert_team: Boolean indicating whether to revert team due to free hit chip
+    :param free_hit_events: Array of events on which to play free hit chips
     :param existing_squad_revert: Array of elements representing squad to revert to
-    :param triple_captain: Boolean indicating whether to play triple captain chip
-    :param bench_boost: Boolean indicating whether to play bench boost chip
+    :param triple_captain_events: Array of events on which to play triple captain chips
+    :param bench_boost_events: Array of events on which to play bench boost chips
     :param client: BigQuery client
     :return: Simulation outcomes
     """
@@ -428,52 +466,55 @@ def simulate_event(
         total_budget,
         free_transfers_available,
         existing_squad_revert,
+        triple_captain,
+        bench_boost,
+        events_to_look_ahead,
+        transfer_penalty,
+        transfer_limit
     ) = set_event_state(
-        event,
-        existing_squad,
-        bank,
-        transfers_made,
-        free_hit,
-        revert_team,
-        existing_squad_revert,
-        elements_df,
+        event=event,
+        existing_squad=existing_squad,
+        bank=bank,
+        transfers_made=transfers_made,
+        wildcard_events=wildcard_events,
+        free_hit_events=free_hit_events,
+        existing_squad_revert=existing_squad_revert,
+        triple_captain_events=triple_captain_events,
+        bench_boost_events=bench_boost_events,
+        events_to_look_ahead=events_to_look_ahead,
+        events_to_look_ahead_from_scratch=events_to_look_ahead_from_scratch,
+        events_to_look_ahead_wildcard=events_to_look_ahead_wildcard,
+        transfer_penalty=transfer_penalty,
+        transfer_limit=transfer_limit,
+        elements_df=elements_df,
     )
 
-    if wildcard:
-        events_to_look_ahead = events_to_look_ahead_wildcard
-    if free_hit:
-        events_to_look_ahead = events_to_look_ahead_free_hit
-    if event == 1:
-        events_to_look_ahead = events_to_look_ahead_from_scratch
-
     existing_squad, bank, transfers = make_transfers(
-        event,
-        events_to_look_ahead,
-        existing_squad,
-        total_budget,
-        first_team_factor,
-        bench_factor,
-        captain_factor,
-        vice_factor,
-        transfer_penalty,
-        transfer_limit,
-        wildcard,
-        free_hit,
-        predictions_df,
-        elements_df,
+        event=event,
+        events_to_look_ahead=events_to_look_ahead,
+        existing_squad=existing_squad,
+        total_budget=total_budget,
+        first_team_factor=first_team_factor,
+        bench_factor=bench_factor,
+        captain_factor=captain_factor,
+        vice_factor=vice_factor,
+        transfer_penalty=transfer_penalty,
+        transfer_limit=transfer_limit,
+        predictions_df=predictions_df,
+        elements_df=elements_df,
     )
     transfers_made = len(transfers["transfers_in"])
 
     first_team, bench, captain, vice = make_team_selection(
-        event,
-        existing_squad,
-        total_budget,
-        first_team_factor,
-        bench_factor,
-        captain_factor,
-        vice_factor,
-        predictions_df,
-        elements_df,
+        event=event,
+        existing_squad=existing_squad,
+        total_budget=total_budget,
+        first_team_factor=first_team_factor,
+        bench_factor=bench_factor,
+        captain_factor=captain_factor,
+        vice_factor=vice_factor,
+        predictions_df=predictions_df,
+        elements_df=elements_df,
     )
 
     results_df = get_results_df(season, event, client)
@@ -485,12 +526,10 @@ def simulate_event(
     first_team_dicts, bench_dicts = make_subs(first_team_dicts, bench_dicts)
 
     event_points = calculate_points(
-        first_team_dicts,
-        bench_dicts,
-        transfers_made,
-        free_transfers_available,
-        wildcard=wildcard,
-        free_hit=free_hit,
+        first_team_dicts=first_team_dicts,
+        bench_dicts=bench_dicts,
+        transfers_made=transfers_made,
+        free_transfers_available=free_transfers_available,
         triple_captain=triple_captain,
         bench_boost=bench_boost,
     )
@@ -527,7 +566,6 @@ def simulate_events(
     wildcard_events,
     events_to_look_ahead_wildcard,
     free_hit_events,
-    events_to_look_ahead_free_hit,
     triple_captain_events,
     bench_boost_events,
     dataset,
@@ -553,8 +591,6 @@ def simulate_events(
     :param events_to_look_ahead_wildcard: Number of future gameweeks to consider when using
     wildcard chip
     :param free_hit_events: Array of events on which to play free hit chips
-    :param events_to_look_ahead_free_hit: Number of future gameweeks to consider when using free
-    hit chip
     :param triple_captain_events: Array of events on which to play triple captain chips
     :param bench_boost_events: Array of events on which to play bench boost chips
     :param dataset: BigQuery dataset to write to
@@ -576,35 +612,11 @@ def simulate_events(
     bench = []
     bank = None
     transfers_made = None
-    wildcard = False
-    free_hit = False
-    revert_team = False
     existing_squad_revert = []
-    triple_captain = False
-    bench_boost = False
 
     simulation_results_arr = []
 
     for event in events:
-
-        if event in wildcard_events:
-            if event == 1:
-                raise Exception("wildcard chip cannot be played on first event")
-            wildcard = True
-
-        if event in free_hit_events:
-            if event == 1:
-                raise Exception("free hit chip cannot be played on first event")
-            free_hit = True
-
-        if event - 1 in free_hit_events:
-            revert_team = True
-
-        if event in triple_captain_events:
-            triple_captain = True
-
-        if event in bench_boost_events:
-            bench_boost = True
 
         logger.info(f"simulating event {event}")
 
@@ -637,14 +649,12 @@ def simulate_events(
             vice_factor=vice_factor,
             transfer_penalty=transfer_penalty,
             transfer_limit=transfer_limit,
-            wildcard=wildcard,
+            wildcard_events=wildcard_events,
             events_to_look_ahead_wildcard=events_to_look_ahead_wildcard,
-            free_hit=free_hit,
-            events_to_look_ahead_free_hit=events_to_look_ahead_free_hit,
-            revert_team=revert_team,
+            free_hit_events=free_hit_events,
             existing_squad_revert=existing_squad_revert,
-            triple_captain=triple_captain,
-            bench_boost=bench_boost,
+            triple_captain_events=triple_captain_events,
+            bench_boost_events=bench_boost_events,
             client=client,
         )
 
