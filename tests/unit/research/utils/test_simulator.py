@@ -389,7 +389,7 @@ def test_set_event_state_first_event(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=1,
         existing_squad=[],
@@ -430,7 +430,7 @@ def test_set_event_state_single_transfer(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=2,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -471,7 +471,7 @@ def test_set_event_state_no_transfers(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=2,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -512,7 +512,7 @@ def test_set_event_state_many_transfers(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=2,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -553,7 +553,7 @@ def test_set_event_state_wildcard(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=2,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -594,7 +594,7 @@ def test_set_event_state_free_hit(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=2,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -635,7 +635,7 @@ def test_set_event_state_revert_team(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=3,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 17, 18, 19, 20],
@@ -676,7 +676,7 @@ def test_set_event_state_triple_captain(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=2,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -717,7 +717,7 @@ def test_set_event_state_bench_boost(elements_df):
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=2,
         existing_squad=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
