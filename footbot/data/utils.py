@@ -87,14 +87,12 @@ def write_to_table(
     table,
     df,
     client,
-    write_disposition="WRITE_APPEND",
-    create_disposition="CREATE_IF_NEEDED",
+    truncate_table=False,
 ):
     """write data to BigQuery table"""
     try:
-        job_config = bigquery.LoadJobConfig()
-        job_config.write_disposition = write_disposition
-        job_config.create_disposition = create_disposition
+        if truncate_table:
+            run_query(f"DELETE FROM `footbot-001.{dataset}.{table}` WHERE true", client)
 
         job = client.load_table_from_dataframe(
             df,

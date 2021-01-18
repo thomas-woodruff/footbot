@@ -21,8 +21,7 @@ def test_write_element_data_to_table(client):
 
     dataset = "integration_tests"
     table = "element_data"
-    run_query(f"DELETE FROM `footbot-001.{dataset}.{table}` WHERE true", client)
-    write_to_table(dataset, table, element_data_df, client)
+    write_to_table(dataset, table, element_data_df, client, truncate_table=True)
 
     written_df = run_query(
         f"SELECT * FROM `footbot-001.{dataset}.{table}` ORDER BY element, current_event, datetime LIMIT 100",

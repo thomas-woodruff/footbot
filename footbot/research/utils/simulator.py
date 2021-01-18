@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from footbot.data.utils import run_query
 from footbot.data.utils import run_templated_query
 from footbot.data.utils import write_to_table
 from footbot.optimiser.team_selector import select_team
@@ -246,7 +245,7 @@ def set_event_state(
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     )
 
 
@@ -349,7 +348,7 @@ def make_team_selection(
     return first_team, bench, captain, vice
 
 
-def retrieve_or_save_predictions(
+def make_new_predictions(
     season, events, get_predictions_df, dataset, table, save_new_predictions, client
 ):
     """
@@ -359,46 +358,34 @@ def retrieve_or_save_predictions(
     :param get_predictions_df: Function to make predictions
     :param dataset: BigQuery dataset to write to
     :param table: BigQuery table to write to
-    :param save_new_predictions: Boolean indicating whether new predictions should be made
+    :param save_new_predictions: Boolean indicating whether new predictions should be saved
     :param client: BigQuery client
     :return: Dataframe of points predictions by player, gameweek, prediction event
     """
 
-    table_id = f"footbot-001.{dataset}.{table}"
+    predictions_df_arr = []
+
+    for event in events:
+        logger.info(f"making predictions as of event {event}")
+
+        predictions_df = get_predictions_df(season, event, client)
+
+        predictions_df["prediction_event"] = event
+
+        predictions_df_arr.append(predictions_df)
+
+    all_predictions_df = pd.concat(predictions_df_arr).reset_index(drop=True)
 
     if save_new_predictions:
+        write_to_table(
+            dataset,
+            table,
+            all_predictions_df,
+            client,
+            truncate_table=True,
+        )
 
-        predictions_df_arr = []
-
-        for event in events:
-            logger.info(f"writing predictions as of event {event}")
-
-            predictions_df = get_predictions_df(season, event, client)
-
-            if event == events[0]:
-                write_disposition = "WRITE_TRUNCATE"
-            else:
-                write_disposition = "WRITE_APPEND"
-
-            predictions_df["prediction_event"] = event
-
-            write_to_table(
-                dataset,
-                table,
-                predictions_df,
-                client,
-                write_disposition=write_disposition,
-            )
-            predictions_df_arr.append(predictions_df)
-
-        all_predictions_df = pd.concat(predictions_df_arr)
-
-        return all_predictions_df
-
-    else:
-        all_predictions_df = run_query(f"SELECT * FROM `{table_id}`", client)
-
-        return all_predictions_df
+    return all_predictions_df
 
 
 def simulate_event(
@@ -470,7 +457,7 @@ def simulate_event(
         bench_boost,
         events_to_look_ahead,
         transfer_penalty,
-        transfer_limit
+        transfer_limit,
     ) = set_event_state(
         event=event,
         existing_squad=existing_squad,
@@ -554,7 +541,7 @@ def simulate_events(
     *,
     season,
     events,
-    get_predictions_df,
+    all_predictions_df,
     events_to_look_ahead,
     events_to_look_ahead_from_scratch,
     first_team_factor,
@@ -568,16 +555,13 @@ def simulate_events(
     free_hit_events,
     triple_captain_events,
     bench_boost_events,
-    dataset,
-    table,
-    save_new_predictions,
     client,
 ):
     """
     Simulate multiple gameweeks.
     :param season: Gameweek season
     :param events: Gameweek events
-    :param get_predictions_df:
+    :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
     :param events_to_look_ahead: Number of future gameweeks to consider
     :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
     team from scratch
@@ -593,9 +577,6 @@ def simulate_events(
     :param free_hit_events: Array of events on which to play free hit chips
     :param triple_captain_events: Array of events on which to play triple captain chips
     :param bench_boost_events: Array of events on which to play bench boost chips
-    :param dataset: BigQuery dataset to write to
-    :param table: BigQuery table to write to
-    :param save_new_predictions: Boolean indicating whether new predictions should be made
     :param client: BigQuery client
     :return: Simulation outcomes
     """
@@ -603,9 +584,7 @@ def simulate_events(
     if events[0] != 1:
         raise Exception("simulation must start at event 1")
 
-    all_predictions_df = retrieve_or_save_predictions(
-        season, events, get_predictions_df, dataset, table, save_new_predictions, client
-    )
+    all_predictions_df = all_predictions_df.copy()
 
     purchase_price_dict = {}
     first_team = []

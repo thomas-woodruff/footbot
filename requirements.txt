@@ -7,7 +7,6 @@ cvxpy==1.0.25
 dill==0.3.1.1
 ecos==2.0.7.post1
 Flask==1.1.1
-footbot==0.1.0
 future==0.18.2
 google-api-core==1.16.0
 google-auth==1.11.0
