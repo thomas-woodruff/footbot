@@ -29,6 +29,7 @@ let
       google_cloud_bigquery
       google_cloud_tasks
       google_cloud_bigquery_storage
+      click
 
       pytest
       isort

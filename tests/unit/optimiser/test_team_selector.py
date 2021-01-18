@@ -6,6 +6,7 @@ from footbot.optimiser.team_selector import construct_player_team_weights
 from footbot.optimiser.team_selector import get_elements_from_vector
 from footbot.optimiser.team_selector import get_sorted_safe_web_names
 from footbot.optimiser.team_selector import select_team
+from footbot.optimiser.team_selector import sort_bench
 from footbot.optimiser.team_selector import validate_optimisation_arguments
 
 
@@ -119,7 +120,7 @@ def players():
         },
         {
             "element": 6,
-            "key": 5,
+            "key": 5.25,
             "value": 40,
             "element_type": 2,
             "team": 6,
@@ -162,7 +163,7 @@ def players():
         },
         {
             "element": 11,
-            "key": 5,
+            "key": 5.5,
             "value": 40,
             "element_type": 3,
             "team": 11,
@@ -246,6 +247,11 @@ def players():
     ]
 
     return keepers + defenders + midfielders + forwards
+
+
+def test_sort_bench(players):
+
+    assert sort_bench([2, 5, 6, 11], players, "key") == [2, 11, 6, 5]
 
 
 def test_construct_player_position_matrix(players):
@@ -499,6 +505,15 @@ def test_select_team_captain_vice_in_first_team(players):
     assert vice[0] in first_team
 
 
+def test_select_team_bench_order(players):
+
+    _, bench, _, _, _ = select_team(
+        players, optimise_key="key", total_budget=600, transfer_penalty=0
+    )
+
+    assert bench == [2, 11, 6, 5]
+
+
 def test_get_sorted_safe_web_names(players):
 
     assert get_sorted_safe_web_names([16, 10, 4, 1], players) == [
@@ -506,4 +521,11 @@ def test_get_sorted_safe_web_names(players):
         "dan",
         "jack",
         "pete",
+    ]
+
+    assert get_sorted_safe_web_names([16, 10, 4, 1], players, is_sorted=False) == [
+        "pete",
+        "jack",
+        "dan",
+        "alex",
     ]

@@ -9,4 +9,5 @@ setup(
     packages=find_packages(),
     package_data={'': ['*.sql', '*.json']},
     include_package_data=True,
+    install_requires=open('requirements.txt').readlines()
 )
