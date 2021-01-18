@@ -2,6 +2,7 @@
 -- this data is used by the team selector
 SELECT
   e.element_all,
+  e.safe_web_name,
   e.element_type,
   e.team,
   e.value
@@ -16,6 +17,7 @@ FROM (
     -- this table is only populated for 1920 event 4 onwards
     SELECT
       element_all,
+      e.safe_web_name,
       ed.element_type,
       ed.team,
       now_cost AS value,
@@ -37,6 +39,7 @@ FROM (
     -- this table is populated for all seasons
     SELECT
       element_all,
+      safe_web_name,
       element_type,
       team,
       value,
