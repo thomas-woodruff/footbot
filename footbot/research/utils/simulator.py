@@ -366,7 +366,7 @@ def make_new_predictions(
     predictions_df_arr = []
 
     for event in events:
-        logger.info(f"writing predictions as of event {event}")
+        logger.info(f"making predictions as of event {event}")
 
         predictions_df = get_predictions_df(season, event, client)
 
