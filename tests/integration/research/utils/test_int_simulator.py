@@ -83,7 +83,7 @@ def test_make_transfers_from_scratch(elements_df, predictions_df):
         elements_df=elements_df,
     )
 
-    assert existing_squad == [
+    assert set(existing_squad) == {
         416,
         669,
         841,
@@ -99,7 +99,7 @@ def test_make_transfers_from_scratch(elements_df, predictions_df):
         451,
         714,
         1022,
-    ]
+    }
     assert bank == 0
     assert transfers == {
         "transfers_in": {
@@ -156,7 +156,7 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
         elements_df=elements_df,
     )
 
-    assert existing_squad == [
+    assert set(existing_squad) == {
         1200,
         213,
         266,
@@ -172,7 +172,7 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
         753,
         463,
         1105,
-    ]
+    }
     assert bank == 120
     assert transfers == {"transfers_in": {841}, "transfers_out": {295}}
 
@@ -207,10 +207,10 @@ def test_make_team_selection(elements_df, predictions_df):
         elements_df=elements_df,
     )
 
-    assert first_team == [1200, 213, 266, 512, 1175, 118, 394, 717, 312, 78, 1105]
-    assert bench == [295, 401, 753, 463]
-    assert captain == [717]
-    assert vice == [312]
+    assert set(first_team) == {1200, 213, 266, 512, 1175, 118, 394, 717, 312, 78, 1105}
+    assert set(bench) == {295, 401, 753, 463}
+    assert set(captain) == {717}
+    assert set(vice) == {312}
 
 
 def get_predictions_df(season, event, client):
