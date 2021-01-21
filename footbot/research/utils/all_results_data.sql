@@ -1,4 +1,4 @@
--- total points earned and minutes played by element by event for a given season
+-- total points earned and minutes played by event, element for a given season
 -- this is used to calculate the points earned by selected players
 -- minutes is required when making substitutions
 -- this data does not contain elements without fixtures
