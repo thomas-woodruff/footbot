@@ -36,20 +36,17 @@ def get_elements_df(season, event, client):
     return df
 
 
-def get_results_df(season, event, client):
+def get_all_results_df(season, client):
     """
     Gets points and minutes data for players for a given gameweek.
     :param season: Gameweek season
-    :param event: Gameweek event
     :param client: BigQuery client
     :return: Dataframe of points and minutes data by player
     """
 
     sql_template_path = os.path.join(Path(__file__).parents[0], "results_data.sql")
 
-    df = run_templated_query(
-        sql_template_path, dict(season=season, event=event), client
-    )
+    df = run_templated_query(sql_template_path, dict(season=season), client)
 
     return df
 
@@ -394,6 +391,7 @@ def simulate_event(
     event,
     purchase_price_dict,
     all_predictions_df,
+    all_results_df,
     existing_squad,
     bank,
     transfers_made,
@@ -419,6 +417,7 @@ def simulate_event(
     :param event: Gameweek event
     :param purchase_price_dict: Dictionary of purchase prices of players in the squad
     :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
+    :param all_results_df: Dataframe of results by player, gameweek
     :param existing_squad: Array of elements representing squad from previous gameweek simulation
     :param bank: Budget in bank
     :param transfers_made: Number of transfers made in previous gameweek
@@ -504,7 +503,8 @@ def simulate_event(
         elements_df=elements_df,
     )
 
-    results_df = get_results_df(season, event, client)
+    results_df = all_results_df.copy()
+    results_df = results_df.loc[results_df["event"] == event, :]
 
     first_team_dicts, bench_dicts = get_points_calculator_input(
         results_df, elements_df, first_team, bench, captain, vice
@@ -542,6 +542,7 @@ def simulate_events(
     season,
     events,
     all_predictions_df,
+    all_results_df,
     events_to_look_ahead,
     events_to_look_ahead_from_scratch,
     first_team_factor,
@@ -562,6 +563,7 @@ def simulate_events(
     :param season: Gameweek season
     :param events: Gameweek events
     :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
+    :param all_results_df: Dataframe of results by player, gameweek
     :param events_to_look_ahead: Number of future gameweeks to consider
     :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
     team from scratch
@@ -585,6 +587,7 @@ def simulate_events(
         raise Exception("simulation must start at event 1")
 
     all_predictions_df = all_predictions_df.copy()
+    all_results_df = all_results_df.copy()
 
     purchase_price_dict = {}
     first_team = []
@@ -617,6 +620,7 @@ def simulate_events(
             event=event,
             purchase_price_dict=purchase_price_dict,
             all_predictions_df=all_predictions_df,
+            all_results_df=all_results_df,
             existing_squad=first_team + bench,
             bank=bank,
             transfers_made=transfers_made,

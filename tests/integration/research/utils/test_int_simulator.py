@@ -3,8 +3,8 @@ import pandas as pd
 import pytest
 
 from footbot.data.utils import run_query
+from footbot.research.utils.simulator import get_all_results_df
 from footbot.research.utils.simulator import get_elements_df
-from footbot.research.utils.simulator import get_results_df
 from footbot.research.utils.simulator import make_new_predictions
 from footbot.research.utils.simulator import make_team_selection
 from footbot.research.utils.simulator import make_transfers
@@ -37,12 +37,12 @@ def test_get_elements_df(elements_df):
     )
 
 
-def test_get_results_df(client):
-    df = get_results_df(test_season, test_event, client)
+def test_get_all_results_df(client):
+    df = get_all_results_df(test_season, client)
 
-    assert set(df.columns) == {"element_all", "minutes", "total_points"}
-    assert len(df) == 525
-    assert len(df["element_all"]) == len(df["element_all"].drop_duplicates())
+    assert set(df.columns) == {"event", "element_all", "minutes", "total_points"}
+    assert len(df) == 22275
+    assert len(df) == len(df[["event", "element_all"]].drop_duplicates())
 
 
 @pytest.fixture(scope="session")
@@ -53,6 +53,14 @@ def all_predictions_df(client):
     )
 
     return all_predictions_df
+
+
+@pytest.fixture(scope="session")
+def all_results_df(client):
+
+    all_results_df = get_all_results_df(test_season, client)
+
+    return all_results_df
 
 
 @pytest.fixture(scope="session")
@@ -246,13 +254,14 @@ def test_make_new_predictions(client):
     pd.testing.assert_frame_equal(all_predictions_df, saved_df)
 
 
-def test_simulate_event(all_predictions_df, client):
+def test_simulate_event(all_predictions_df, all_results_df, client):
 
     output = simulate_event(
         season=test_season,
         event=test_event,
         purchase_price_dict={},
         all_predictions_df=all_predictions_df,
+        all_results_df=all_results_df,
         existing_squad=[],
         bank=None,
         transfers_made=None,
@@ -276,12 +285,13 @@ def test_simulate_event(all_predictions_df, client):
     assert output
 
 
-def test_simulate_events(all_predictions_df, client):
+def test_simulate_events(all_predictions_df, all_results_df, client):
 
     simulation_results_arr = simulate_events(
         season=test_season,
         events=test_events,
         all_predictions_df=all_predictions_df,
+        all_results_df=all_results_df,
         events_to_look_ahead=0,
         events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
@@ -303,12 +313,13 @@ def test_simulate_events(all_predictions_df, client):
     assert total_event_points == 160
 
 
-def test_simulate_events_wildcard(all_predictions_df, client):
+def test_simulate_events_wildcard(all_predictions_df, all_results_df, client):
 
     simulation_results_arr = simulate_events(
         season=test_season,
         events=test_events,
         all_predictions_df=all_predictions_df,
+        all_results_df=all_results_df,
         events_to_look_ahead=0,
         events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
@@ -339,12 +350,13 @@ def test_simulate_events_wildcard(all_predictions_df, client):
     assert set(squad_event_2) == set(squad_event_3)  # we enforce no transfers
 
 
-def test_simulate_events_free_hit(all_predictions_df, client):
+def test_simulate_events_free_hit(all_predictions_df, all_results_df, client):
 
     simulation_results_arr = simulate_events(
         season=test_season,
         events=test_events,
         all_predictions_df=all_predictions_df,
+        all_results_df=all_results_df,
         events_to_look_ahead=0,
         events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
