@@ -18,38 +18,32 @@ from footbot.research.utils.subs import pick_captain
 logger = logging.getLogger(__name__)
 
 
-def get_elements_df(season, event, client):
+def get_all_elements_df(season, client):
     """
-    Gets position, price and team data for players for a given gameweek.
+    Gets position, price and team data for players for a given season.
     :param season: Gameweek season
-    :param event: Gameweek event
     :param client: BigQuery client
     :return: Dataframe of player metadata
     """
 
-    sql_template_path = os.path.join(Path(__file__).parents[0], "element_data.sql")
+    sql_template_path = os.path.join(Path(__file__).parents[0], "all_elements_data.sql")
 
-    df = run_templated_query(
-        sql_template_path, dict(season=season, event=event), client
-    )
+    df = run_templated_query(sql_template_path, dict(season=season), client)
 
     return df
 
 
-def get_results_df(season, event, client):
+def get_all_results_df(season, client):
     """
-    Gets points and minutes data for players for a given gameweek.
+    Gets points and minutes data for players for a given season.
     :param season: Gameweek season
-    :param event: Gameweek event
     :param client: BigQuery client
     :return: Dataframe of points and minutes data by player
     """
 
-    sql_template_path = os.path.join(Path(__file__).parents[0], "results_data.sql")
+    sql_template_path = os.path.join(Path(__file__).parents[0], "all_results_data.sql")
 
-    df = run_templated_query(
-        sql_template_path, dict(season=season, event=event), client
-    )
+    df = run_templated_query(sql_template_path, dict(season=season), client)
 
     return df
 
@@ -390,10 +384,11 @@ def make_new_predictions(
 
 def simulate_event(
     *,
-    season,
     event,
     purchase_price_dict,
+    all_elements_df,
     all_predictions_df,
+    all_results_df,
     existing_squad,
     bank,
     transfers_made,
@@ -411,14 +406,14 @@ def simulate_event(
     existing_squad_revert,
     triple_captain_events,
     bench_boost_events,
-    client,
 ):
     """
     Simulate a specified gameweek.
-    :param season: Gameweek season
     :param event: Gameweek event
     :param purchase_price_dict: Dictionary of purchase prices of players in the squad
+    :param all_elements_df: Dataframe of player data by player, gameweek
     :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
+    :param all_results_df: Dataframe of results by player, gameweek
     :param existing_squad: Array of elements representing squad from previous gameweek simulation
     :param bank: Budget in bank
     :param transfers_made: Number of transfers made in previous gameweek
@@ -438,11 +433,12 @@ def simulate_event(
     :param existing_squad_revert: Array of elements representing squad to revert to
     :param triple_captain_events: Array of events on which to play triple captain chips
     :param bench_boost_events: Array of events on which to play bench boost chips
-    :param client: BigQuery client
     :return: Simulation outcomes
     """
 
-    elements_df = get_elements_df(season, event, client)
+    elements_df = all_elements_df.copy()
+    elements_df = elements_df.loc[elements_df["event"] == event, :]
+    elements_df = elements_df.drop(columns=["event"])
     update_player_values_with_selling_prices(elements_df, purchase_price_dict)
 
     predictions_df = all_predictions_df.copy()
@@ -504,7 +500,9 @@ def simulate_event(
         elements_df=elements_df,
     )
 
-    results_df = get_results_df(season, event, client)
+    results_df = all_results_df.copy()
+    results_df = results_df.loc[results_df["event"] == event, :]
+    results_df = results_df.drop(columns=["event"])
 
     first_team_dicts, bench_dicts = get_points_calculator_input(
         results_df, elements_df, first_team, bench, captain, vice
@@ -539,9 +537,10 @@ def simulate_event(
 
 def simulate_events(
     *,
-    season,
     events,
+    all_elements_df,
     all_predictions_df,
+    all_results_df,
     events_to_look_ahead,
     events_to_look_ahead_from_scratch,
     first_team_factor,
@@ -555,13 +554,13 @@ def simulate_events(
     free_hit_events,
     triple_captain_events,
     bench_boost_events,
-    client,
 ):
     """
     Simulate multiple gameweeks.
-    :param season: Gameweek season
     :param events: Gameweek events
+    :param all_elements_df: Dataframe of player data by player, gameweek
     :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
+    :param all_results_df: Dataframe of results by player, gameweek
     :param events_to_look_ahead: Number of future gameweeks to consider
     :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
     team from scratch
@@ -577,14 +576,15 @@ def simulate_events(
     :param free_hit_events: Array of events on which to play free hit chips
     :param triple_captain_events: Array of events on which to play triple captain chips
     :param bench_boost_events: Array of events on which to play bench boost chips
-    :param client: BigQuery client
     :return: Simulation outcomes
     """
 
     if events[0] != 1:
         raise Exception("simulation must start at event 1")
 
+    all_elements_df = all_elements_df.copy()
     all_predictions_df = all_predictions_df.copy()
+    all_results_df = all_results_df.copy()
 
     purchase_price_dict = {}
     first_team = []
@@ -613,10 +613,11 @@ def simulate_events(
             results_df,
             elements_df,
         ) = simulate_event(
-            season=season,
             event=event,
             purchase_price_dict=purchase_price_dict,
+            all_elements_df=all_elements_df,
             all_predictions_df=all_predictions_df,
+            all_results_df=all_results_df,
             existing_squad=first_team + bench,
             bank=bank,
             transfers_made=transfers_made,
@@ -634,7 +635,6 @@ def simulate_events(
             existing_squad_revert=existing_squad_revert,
             triple_captain_events=triple_captain_events,
             bench_boost_events=bench_boost_events,
-            client=client,
         )
 
         simulation_results_arr.append(

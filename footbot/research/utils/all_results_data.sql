@@ -1,8 +1,9 @@
--- total points earned and minutes played by element for a given season and event
+-- total points earned and minutes played by event, element for a given season
 -- this is used to calculate the points earned by selected players
 -- minutes is required when making substitutions
 -- this data does not contain elements without fixtures
 SELECT
+  event,
   element_all,
   SUM(minutes) AS minutes,
   SUM(total_points) AS total_points
@@ -14,7 +15,7 @@ ON
   eg.element = e.element
   AND eg.season = e.season
 WHERE
-  event = {event}
-  AND eg.season = '{season}'
+  eg.season = '{season}'
 GROUP BY
-  1
+  1,
+  2
