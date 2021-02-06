@@ -48,45 +48,44 @@ def get_all_results_df(season, client):
     return df
 
 
-def aggregate_predictions(predictions_df, start_event, end_event):
+def aggregate_predictions(predictions_df, start_event, end_event, weight):
     """
-    Averages point predictions for multiple gameweeks.
+    Calculates weighted sum of point predictions for multiple gameweeks.
     :param predictions_df: Dataframe of points predictions by player, gameweek
     :param start_event: First gameweek event
     :param end_event: Last gameweek event
+    :param weight: weight for exponential decay of points
     :return: Dataframe of points predictions by player
     """
-
-    num_events = end_event - start_event + 1
 
     predictions_df = predictions_df.copy()
     predictions_df = predictions_df.loc[
         predictions_df["event"].between(start_event, end_event), :
     ]
 
+    predictions_df['weight'] = weight ** (predictions_df['event'] - start_event)
+
+    predictions_df['predicted_total_points'] = predictions_df['predicted_total_points'] * predictions_df['weight']
+
     predictions_df = predictions_df.groupby(["element_all"], as_index=False)[
         ["predicted_total_points"]
     ].sum()
 
-    predictions_df["avg_predicted_total_points"] = (
-        predictions_df["predicted_total_points"] / num_events
-    )
-    predictions_df = predictions_df.drop(["predicted_total_points"], axis=1)
-
     return predictions_df
 
 
-def get_team_selector_input(predictions_df, elements_df, start_event, end_event):
+def get_team_selector_input(predictions_df, elements_df, start_event, end_event, weight):
     """
     Get input for team selector.
     :param predictions_df: Dataframe of points predictions by player, gameweek
     :param elements_df: Dataframe of player metadata
     :param start_event: First gameweek event
     :param end_event: Last gameweek event
+    :param weight: weight for exponential decay of points
     :return: Array of dicts of predicted points and player data
     """
 
-    agg_predictions_df = aggregate_predictions(predictions_df, start_event, end_event)
+    agg_predictions_df = aggregate_predictions(predictions_df, start_event, end_event, weight)
 
     players_df = elements_df.join(
         agg_predictions_df.set_index("element_all"),
@@ -94,8 +93,8 @@ def get_team_selector_input(predictions_df, elements_df, start_event, end_event)
     )
 
     # we may not make predictions for all players
-    players_df["avg_predicted_total_points"] = players_df[
-        "avg_predicted_total_points"
+    players_df["predicted_total_points"] = players_df[
+        "predicted_total_points"
     ].fillna(0)
 
     # team selector expects "element" instead of "element_all"
@@ -246,6 +245,7 @@ def set_event_state(
 def make_transfers(
     event,
     events_to_look_ahead,
+    weight,
     existing_squad,
     total_budget,
     first_team_factor,
@@ -261,6 +261,7 @@ def make_transfers(
     Make transfers for current gameweek simulation.
     :param event: Current gameweek event
     :param events_to_look_ahead: Number of future gameweeks to consider
+    :param weight: weight for exponential decay of points
     :param existing_squad: Array of elements representing existing squad
     :param total_budget: Total budget available, i.e. total team value + bank
     :param first_team_factor: The probability a player on the first team will play
@@ -275,12 +276,12 @@ def make_transfers(
     """
 
     players = get_team_selector_input(
-        predictions_df, elements_df, event, event + events_to_look_ahead
+        predictions_df, elements_df, event, event + events_to_look_ahead, weight
     )
 
     first_team, bench, _, _, transfers = select_team(
         players,
-        optimise_key="avg_predicted_total_points",
+        optimise_key="predicted_total_points",
         existing_squad=existing_squad,
         total_budget=total_budget,
         first_team_factor=first_team_factor,
@@ -324,11 +325,11 @@ def make_team_selection(
     :param elements_df: Dataframe of player metadata
     :return: Outcome of team selection decisions
     """
-    players = get_team_selector_input(predictions_df, elements_df, event, event)
+    players = get_team_selector_input(predictions_df, elements_df, event, event, weight=1.0)
 
     first_team, bench, captain, vice, _ = select_team(
         players,
-        optimise_key="avg_predicted_total_points",
+        optimise_key="predicted_total_points",
         existing_squad=existing_squad,
         total_budget=total_budget,
         first_team_factor=first_team_factor,
@@ -393,6 +394,7 @@ def simulate_event(
     bank,
     transfers_made,
     events_to_look_ahead,
+    weight,
     events_to_look_ahead_from_scratch,
     first_team_factor,
     bench_factor,
@@ -418,6 +420,7 @@ def simulate_event(
     :param bank: Budget in bank
     :param transfers_made: Number of transfers made in previous gameweek
     :param events_to_look_ahead: Number of future gameweeks to consider
+    :param weight: weight for exponential decay of points
     :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
     team from scratch
     :param first_team_factor: The probability a player on the first team will play
@@ -475,6 +478,7 @@ def simulate_event(
     existing_squad, bank, transfers = make_transfers(
         event=event,
         events_to_look_ahead=events_to_look_ahead,
+        weight=weight,
         existing_squad=existing_squad,
         total_budget=total_budget,
         first_team_factor=first_team_factor,
@@ -542,6 +546,7 @@ def simulate_events(
     all_predictions_df,
     all_results_df,
     events_to_look_ahead,
+    weight,
     events_to_look_ahead_from_scratch,
     first_team_factor,
     bench_factor,
@@ -562,6 +567,7 @@ def simulate_events(
     :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
     :param all_results_df: Dataframe of results by player, gameweek
     :param events_to_look_ahead: Number of future gameweeks to consider
+    :param weight: weight for exponential decay of points
     :param events_to_look_ahead_from_scratch: Number of future gameweeks to consider when choosing
     team from scratch
     :param first_team_factor: The probability a player on the first team will play
@@ -622,6 +628,7 @@ def simulate_events(
             bank=bank,
             transfers_made=transfers_made,
             events_to_look_ahead=events_to_look_ahead,
+            weight=weight,
             events_to_look_ahead_from_scratch=events_to_look_ahead_from_scratch,
             first_team_factor=first_team_factor,
             bench_factor=bench_factor,

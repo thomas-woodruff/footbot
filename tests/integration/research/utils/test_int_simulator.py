@@ -97,6 +97,7 @@ def test_make_transfers_from_scratch(elements_df, predictions_df):
     existing_squad, bank, transfers = make_transfers(
         event=test_event,
         events_to_look_ahead=0,
+        weight=1.0,
         existing_squad=[],
         total_budget=1000,
         first_team_factor=0.9,
@@ -154,6 +155,7 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
     existing_squad, bank, transfers = make_transfers(
         event=test_event,
         events_to_look_ahead=0,
+        weight=1.0,
         existing_squad=[
             213,
             78,
@@ -288,6 +290,7 @@ def test_simulate_event(all_elements_df, all_predictions_df, all_results_df, cli
         bank=None,
         transfers_made=None,
         events_to_look_ahead=0,
+        weight=1.0,
         events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
         bench_factor=0.1,
@@ -314,6 +317,7 @@ def test_simulate_events(all_elements_df, all_predictions_df, all_results_df, cl
         all_predictions_df=all_predictions_df,
         all_results_df=all_results_df,
         events_to_look_ahead=0,
+        weight=1.0,
         events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
         bench_factor=0.1,
@@ -343,6 +347,7 @@ def test_simulate_events_wildcard(
         all_predictions_df=all_predictions_df,
         all_results_df=all_results_df,
         events_to_look_ahead=0,
+        weight=1.0,
         events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
         bench_factor=0.1,
@@ -381,6 +386,7 @@ def test_simulate_events_free_hit(
         all_predictions_df=all_predictions_df,
         all_results_df=all_results_df,
         events_to_look_ahead=0,
+        weight=1.0,
         events_to_look_ahead_from_scratch=0,
         first_team_factor=0.9,
         bench_factor=0.1,
