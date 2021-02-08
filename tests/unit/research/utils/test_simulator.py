@@ -6,6 +6,7 @@ from footbot.research.utils.simulator import get_points_calculator_input
 from footbot.research.utils.simulator import get_team_selector_input
 from footbot.research.utils.simulator import make_transfers
 from footbot.research.utils.simulator import set_event_state
+from footbot.research.utils.simulator import validate_all_predictions_df
 
 
 def test_aggregate_predictions():
@@ -24,13 +25,13 @@ def test_aggregate_predictions():
         ]
     )
 
-    df = aggregate_predictions(predictions_df, 1, 3)
+    df = aggregate_predictions(predictions_df, start_event=1, end_event=3, weight=0.5)
 
     expected_df = pd.DataFrame(
         [
-            {"element_all": 1, "avg_predicted_total_points": 2.0},
-            {"element_all": 2, "avg_predicted_total_points": 1.0},
-            {"element_all": 3, "avg_predicted_total_points": 3.0},
+            {"element_all": 1, "predicted_total_points": 2.75},
+            {"element_all": 2, "predicted_total_points": 2.0},
+            {"element_all": 3, "predicted_total_points": 4.25},
         ]
     )
 
@@ -49,7 +50,9 @@ def test_get_team_selector_input():
         ]
     )
 
-    players = get_team_selector_input(predictions_df, elements_df, 1, 1)
+    players = get_team_selector_input(
+        predictions_df, elements_df, start_event=1, end_event=1, weight=1.0
+    )
 
     expected_players = [
         {
@@ -57,14 +60,14 @@ def test_get_team_selector_input():
             "element_type": 1,
             "team": 1,
             "value": 10.0,
-            "avg_predicted_total_points": 1.0,
+            "predicted_total_points": 1.0,
         },
         {
             "element": 2,
             "element_type": 4,
             "team": 3,
             "value": 7.5,
-            "avg_predicted_total_points": 0.0,
+            "predicted_total_points": 0.0,
         },
     ]
 
@@ -752,6 +755,7 @@ def test_make_transfers_from_scratch(elements_df, predictions_df):
     existing_squad, bank, transfers = make_transfers(
         event=1,
         events_to_look_ahead=1,
+        weight=1.0,
         existing_squad=[],
         total_budget=600,
         first_team_factor=0.9,
@@ -777,6 +781,7 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
     existing_squad, bank, transfers = make_transfers(
         event=1,
         events_to_look_ahead=1,
+        weight=1.0,
         existing_squad=[1, 7, 8, 9, 12, 13, 14, 15, 17, 18, 19, 2, 5, 6, 11],
         total_budget=600,
         first_team_factor=0.9,
@@ -795,3 +800,30 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
         "transfers_in": {3},
         "transfers_out": {1},
     }
+
+
+def test_validate_all_predictions_df():
+
+    all_predictions_df = pd.DataFrame(
+        [
+            {
+                "prediction_event": 1,
+                "event": 1,
+                "element_all": 1,
+                "opponent_team": 1,
+                "predicted_total_points": 5.0,
+            },
+            {
+                "prediction_event": 1,
+                "event": 1,
+                "element_all": 1,
+                "opponent_team": 1,
+                "predicted_total_points": 6.0,
+            },
+        ]
+    )
+
+    with pytest.raises(Exception) as e:
+        validate_all_predictions_df(all_predictions_df)
+
+    assert "`all_predictions_df` contains duplicate entries" in str(e.value)
