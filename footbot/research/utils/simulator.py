@@ -63,9 +63,11 @@ def aggregate_predictions(predictions_df, start_event, end_event, weight):
         predictions_df["event"].between(start_event, end_event), :
     ]
 
-    predictions_df['weight'] = weight ** (predictions_df['event'] - start_event)
+    predictions_df["weight"] = weight ** (predictions_df["event"] - start_event)
 
-    predictions_df['predicted_total_points'] = predictions_df['predicted_total_points'] * predictions_df['weight']
+    predictions_df["predicted_total_points"] = (
+        predictions_df["predicted_total_points"] * predictions_df["weight"]
+    )
 
     predictions_df = predictions_df.groupby(["element_all"], as_index=False)[
         ["predicted_total_points"]
@@ -74,7 +76,9 @@ def aggregate_predictions(predictions_df, start_event, end_event, weight):
     return predictions_df
 
 
-def get_team_selector_input(predictions_df, elements_df, start_event, end_event, weight):
+def get_team_selector_input(
+    predictions_df, elements_df, start_event, end_event, weight
+):
     """
     Get input for team selector.
     :param predictions_df: Dataframe of points predictions by player, gameweek
@@ -85,7 +89,9 @@ def get_team_selector_input(predictions_df, elements_df, start_event, end_event,
     :return: Array of dicts of predicted points and player data
     """
 
-    agg_predictions_df = aggregate_predictions(predictions_df, start_event, end_event, weight)
+    agg_predictions_df = aggregate_predictions(
+        predictions_df, start_event, end_event, weight
+    )
 
     players_df = elements_df.join(
         agg_predictions_df.set_index("element_all"),
@@ -93,9 +99,9 @@ def get_team_selector_input(predictions_df, elements_df, start_event, end_event,
     )
 
     # we may not make predictions for all players
-    players_df["predicted_total_points"] = players_df[
-        "predicted_total_points"
-    ].fillna(0)
+    players_df["predicted_total_points"] = players_df["predicted_total_points"].fillna(
+        0
+    )
 
     # team selector expects "element" instead of "element_all"
     players_df = players_df.rename(columns={"element_all": "element"})
@@ -325,7 +331,9 @@ def make_team_selection(
     :param elements_df: Dataframe of player metadata
     :return: Outcome of team selection decisions
     """
-    players = get_team_selector_input(predictions_df, elements_df, event, event, weight=1.0)
+    players = get_team_selector_input(
+        predictions_df, elements_df, event, event, weight=1.0
+    )
 
     first_team, bench, captain, vice, _ = select_team(
         players,
@@ -381,6 +389,28 @@ def make_new_predictions(
         )
 
     return all_predictions_df
+
+
+def validate_all_predictions_df(all_predictions_df):
+    """
+    Check for duplicate predictions.
+    :param all_predictions_df: Dataframe of points predictions by player, gameweek, prediction event
+    :return: None
+    """
+
+    distinct_entries = len(
+        all_predictions_df[
+            [
+                "prediction_event",
+                "event",
+                "element_all",
+                "opponent_team",
+            ]
+        ].drop_duplicates()
+    )
+
+    if len(all_predictions_df) != distinct_entries:
+        raise Exception("`all_predictions_df` contains duplicate entries")
 
 
 def simulate_event(
@@ -589,7 +619,10 @@ def simulate_events(
         raise Exception("simulation must start at event 1")
 
     all_elements_df = all_elements_df.copy()
+
+    validate_all_predictions_df(all_predictions_df)
     all_predictions_df = all_predictions_df.copy()
+
     all_results_df = all_results_df.copy()
 
     purchase_price_dict = {}

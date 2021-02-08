@@ -6,6 +6,7 @@ from footbot.research.utils.simulator import get_points_calculator_input
 from footbot.research.utils.simulator import get_team_selector_input
 from footbot.research.utils.simulator import make_transfers
 from footbot.research.utils.simulator import set_event_state
+from footbot.research.utils.simulator import validate_all_predictions_df
 
 
 def test_aggregate_predictions():
@@ -24,12 +25,7 @@ def test_aggregate_predictions():
         ]
     )
 
-    df = aggregate_predictions(
-        predictions_df,
-        start_event=1,
-        end_event=3,
-        weight=0.5
-    )
+    df = aggregate_predictions(predictions_df, start_event=1, end_event=3, weight=0.5)
 
     expected_df = pd.DataFrame(
         [
@@ -55,11 +51,7 @@ def test_get_team_selector_input():
     )
 
     players = get_team_selector_input(
-        predictions_df,
-        elements_df,
-        start_event=1,
-        end_event=1,
-        weight=1.0
+        predictions_df, elements_df, start_event=1, end_event=1, weight=1.0
     )
 
     expected_players = [
@@ -808,3 +800,30 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
         "transfers_in": {3},
         "transfers_out": {1},
     }
+
+
+def test_validate_all_predictions_df():
+
+    all_predictions_df = pd.DataFrame(
+        [
+            {
+                "prediction_event": 1,
+                "event": 1,
+                "element_all": 1,
+                "opponent_team": 1,
+                "predicted_total_points": 5.0,
+            },
+            {
+                "prediction_event": 1,
+                "event": 1,
+                "element_all": 1,
+                "opponent_team": 1,
+                "predicted_total_points": 6.0,
+            },
+        ]
+    )
+
+    with pytest.raises(Exception) as e:
+        validate_all_predictions_df(all_predictions_df)
+
+    assert "`all_predictions_df` contains duplicate entries" in str(e.value)
