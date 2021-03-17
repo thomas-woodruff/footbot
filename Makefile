@@ -14,8 +14,12 @@ build:
 
 .PHONY: clean
 clean:
-	docker rm -f $(NAME)
+	make clean-container
 	docker image rm $(NAME)_$(NAME)
+
+.PHONY: clean-container
+clean-container:
+	docker rm -f $(NAME)
 
 .PHONY: format
 format:
@@ -37,7 +41,8 @@ pytest:
 
 .PHONY: serve
 serve:
-	docker-compose run -d --service-ports --name $(NAME) $(NAME)
+	make clean-container
+	docker-compose run --service-ports --name $(NAME) $(NAME)
 
 .PHONY: test
 test:
