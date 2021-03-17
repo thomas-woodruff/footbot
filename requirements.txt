@@ -2,10 +2,9 @@ cachetools==4.0.0
 certifi==2019.11.28
 chardet==3.0.4
 Click==7.0
-cvxopt==1.2.4
-cvxpy==1.0.25
+cvxopt==1.2.6
+cvxpy==1.1.11
 dill==0.3.1.1
-ecos==2.0.7.post1
 Flask==1.1.1
 footbot==0.1.0
 future==0.18.2
@@ -26,7 +25,7 @@ Jinja2==2.11.1
 joblib==0.14.1
 MarkupSafe==1.1.1
 multiprocess==0.70.9
-numpy==1.18.1
+numpy==1.20.1
 osqp==0.6.1
 pandas==1.0.0
 protobuf==3.11.2
@@ -39,7 +38,6 @@ requests==2.22.0
 rsa==4.0
 scikit-learn==0.22.1
 scipy==1.4.1
-scs==2.1.1.post2
 six==1.14.0
 Unidecode==1.1.1
 urllib3==1.25.8

@@ -1,0 +1,11 @@
+.git
+.github
+.idea
+secrets
+venv
+.gcloudignore
+.gitignore
+app.yaml
+CODEOWNERS
+cron.yaml
+README.md
