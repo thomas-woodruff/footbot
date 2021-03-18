@@ -9,7 +9,7 @@ black:
 	docker-compose run --rm $(NAME) black -q -t py38 $(NAME)/ tests/
 
 .PHONY: build
-build: clean
+build:
 	docker-compose build $(NAME)
 
 .PHONY: clean
