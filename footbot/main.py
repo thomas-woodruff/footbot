@@ -166,7 +166,7 @@ def update_predictions_route():
 def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
 
     if request.data and request.content_type != 'application/json':
-        return "Request content-type must be application/json"
+        return "Request content-type must be application/json", 400
 
     login = password = None
     try:
