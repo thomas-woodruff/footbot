@@ -1,7 +1,7 @@
 NAME=footbot
 
 .PHONY: bash
-bash:
+bash: clean-container
 	docker-compose run --service-ports --name $(NAME) $(NAME) bash
 
 .PHONY: black
@@ -13,8 +13,7 @@ build:
 	docker-compose build $(NAME)
 
 .PHONY: clean
-clean:
-	make clean-container
+clean: clean-container
 	docker image rm $(NAME)_$(NAME)
 
 .PHONY: clean-container
@@ -22,10 +21,7 @@ clean-container:
 	docker rm -f $(NAME)
 
 .PHONY: format
-format:
-	make black
-	make isort
-	make lint
+format: black isort lint
 
 .PHONY: isort
 isort:
@@ -40,11 +36,8 @@ pytest:
 	docker-compose run --rm $(NAME) python -m pytest
 
 .PHONY: serve
-serve:
-	make clean-container
+serve: clean-container
 	docker-compose run --service-ports --name $(NAME) $(NAME)
 
 .PHONY: test
-test:
-	make pytest
-	make lint
+test: pytest lint
