@@ -1,45 +1,42 @@
 # footbot
 
-Run
----
-    $ python -m footbot
-    Usage: __main__.py [OPTIONS] COMMAND [ARGS]...
-
-    Options:
-      --debug / --no-debug
-      --help                Show this message and exit.
-    
-    Commands:
-      optimise
-      serve
+We run footbot using Docker. If you don't already have Docker on your machine, you can install Docker Desktop here:  
+https://www.docker.com/get-started
 
 Optimise
 --------
 
-    $ python -m footbot optimise <team_id> <gameweek>
+    $ docker-compose run --rm footbot python -m footbot optimise <team_id> <gameweek>
 
 Serve
 -----
 
-    $ python -m footbot serve
-     * Serving Flask app "footbot.main" (lazy loading)
-     * Environment: production
-       WARNING: This is a development server. Do not use it in a production deployment.
-       Use a production WSGI server instead.
-     * Debug mode: on
-    2020-10-06 19:55:20,639 - werkzeug - INFO -  * Running on http://0.0.0.0:8022/ (Press CTRL+C to quit)
+    $ make serve
+     make clean-container
+     docker rm -f footbot
+     footbot
+     docker-compose run --service-ports --name footbot footbot
+     Creating footbot_footbot_run ... done
+      * Serving Flask app "footbot.main" (lazy loading)
+      * Environment: production
+        WARNING: This is a development server. Do not use it in a production deployment.
+        Use a production WSGI server instead.
+      * Debug mode: on
+     2021-03-17 16:33:28,066 - werkzeug - INFO -  * Running on http://0.0.0.0:8022/ (Press CTRL+C to quit)
+
+
 
 Access with credentials
 -----------------------
 
-    $ export FPL_LOGIN=my@email.com
-    $ export FPL_PASSWORD=mypassword
-    $ ./curl.sh "<footbot url>/optimise_team/5002301?start_event=5"
+    $ export FPL_LOGIN=<email>
+    $ export FPL_PASSWORD=<password>
+    $ ./curl.sh "<footbot url>/optimise_team/<team_id>?start_event=<gameweek>"
 
 Test
 ----
-    $ python -m pytest
+    $ make test
 
 Format
 ------
-    $ ./format.sh
+    $ make format
