@@ -165,6 +165,9 @@ def update_predictions_route():
 @app.route("/optimise_team/<entry>", methods=["GET", "POST"])
 def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
 
+    if request.data and request.content_type != 'application/json':
+        return "Request content-type must be application/json", 400
+
     login = password = None
     try:
         data = request.json
