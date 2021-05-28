@@ -1,10 +1,1 @@
 cron:
-- description: "Update element data on BigQuery"
-  url: /update_element_data
-  schedule: every day 06:00
-- description: "Update element gameweek history and fixtures on BigQuery"
-  url: /update_element_history_fixtures
-  schedule: every day 06:05
-- description: "Update predictions for upcoming gameweeks on BigQuery"
-  url: /update_predictions
-  schedule: every day 09:00
