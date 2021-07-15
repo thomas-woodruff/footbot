@@ -17,11 +17,11 @@ clean: clean-container clean-image
 
 .PHONY: clean-container
 clean-container:
-	docker rm -f $(NAME)
+	docker rm -f $(NAME) || true
 
 .PHONY: clean-image
 clean-image:
-	docker image rm $(NAME)_$(NAME)
+	docker image rm $(NAME)_$(NAME) || true
 
 .PHONY: format
 format: black isort lint

@@ -9,7 +9,7 @@ WITH
       event,
       predicted_total_points
     FROM
-      `footbot-001.fpl.element_gameweeks_predictions_2021_v01` )
+      `footbot-001.fpl.element_gameweeks_predictions_2122_v01` )
   WHERE
     event BETWEEN {start_event}
     AND {end_event}
@@ -35,7 +35,7 @@ WITH
         100)/100 AS prob_playing,
       ROW_NUMBER() OVER(PARTITION BY element ORDER BY datetime DESC) AS is_current,
     FROM
-      `footbot-001.fpl.element_data_2021` )
+      `footbot-001.fpl.element_data_2122` )
   WHERE
     is_current = 1 )
   --------------------------------------------------------------------------------------------------------------------------------------------------------------
