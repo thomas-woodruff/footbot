@@ -259,33 +259,19 @@ def select_team(
     )
 
 
-def get_private_entry_data(entry, login, password):
+def get_private_entry_data(entry, authenticated_session):
     """
     Get private entry data using specified credentials.
 
     Private entry data includes recent squad changes, players prices and bank balance.
 
     :param entry: Team identifier
-    :param login: FPL login
-    :param password: FPL password
+    :param authenticated_session: Requests session authenticated with FPL credentials
     :return: Dictionary of private entry data
     """
 
-    session = requests.session()
-
-    payload = {
-        "redirect_uri": "https://fantasy.premierleague.com/a/login",
-        "app": "plfpl-web",
-        "login": login,
-        "password": password,
-    }
-
-    logger.info("authenticating for entry")
-    resp = session.post("https://users.premierleague.com/accounts/login/", data=payload)
-    resp.raise_for_status()
-
     logger.info("getting private entry data")
-    private_data = session.get(
+    private_data = authenticated_session.get(
         f"https://fantasy.premierleague.com/api/my-team/{entry}"
     ).json()
 
@@ -303,6 +289,8 @@ def get_public_entry_data(entry):
     """
 
     current_event = get_current_event()
+    if current_event == 0:
+        raise Exception('No publicly available data before season starts')
 
     logger.info("getting entry data")
     entry_request = requests.get(
@@ -346,8 +334,7 @@ def optimise_entry(
     transfer_limit=15,
     start_event=1,
     end_event=38,
-    login=None,
-    password=None,
+    authenticated_session=None,
 ):
     """
     Select the optimal team and transfers for a specified entry.
@@ -364,8 +351,7 @@ def optimise_entry(
     :param transfer_limit: The limit to the number of transfers that can be made
     :param start_event: Start of event range to optimiser over
     :param end_event: End of event range to optimiser over
-    :param login: FPL login
-    :param password: FPL password
+    :param authenticated_session: Requests session authenticated with FPL credentials
     :return: Dictionary of team selection decisions
     """
 
@@ -377,8 +363,8 @@ def optimise_entry(
         client,
     ).to_dict("records")
 
-    if login and password:
-        private_data = get_private_entry_data(entry, login, password)
+    if authenticated_session:
+        private_data = get_private_entry_data(entry, authenticated_session)
         existing_squad = [i["element"] for i in private_data["picks"]]
         team_value = np.sum([i["selling_price"] for i in private_data["picks"]])
         bank = private_data["transfers"]["bank"]
@@ -408,12 +394,12 @@ def optimise_entry(
         transfer_limit=transfer_limit,
     )
 
-    first_team = get_sorted_safe_web_names(first_team, players)
-    bench = get_sorted_safe_web_names(bench, players, is_sorted=False)
-    captain = get_sorted_safe_web_names(captain, players)
-    vice = get_sorted_safe_web_names(vice, players)
-    transfers_in = get_sorted_safe_web_names(transfers["transfers_in"], players)
-    transfers_out = get_sorted_safe_web_names(transfers["transfers_out"], players)
+    first_team = [p for p in players if p['element'] in first_team]
+    bench = [p for p in players if p['element'] in bench]
+    captain = [p for p in players if p['element'] in captain]
+    vice = [p for p in players if p['element'] in vice]
+    transfers_in = [p for p in players if p['element'] in transfers['transfers_in']]
+    transfers_out = [p for p in players if p['element'] in transfers['transfers_out']]
 
     return {
         "first_team": first_team,

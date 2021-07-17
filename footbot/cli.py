@@ -3,10 +3,14 @@ import os
 from pprint import pprint
 from typing import Optional
 
+from requests.exceptions import HTTPError
+
 import click
 
 from .main import app
 from .optimiser.team_selector import optimise_entry
+from .data.utils import get_authenticated_session
+
 
 root = logging.getLogger()
 logger = logging.getLogger(__name__)
@@ -42,6 +46,11 @@ def optimise(
     transfer_limit: int,
     end_event: Optional[int] = None,
 ):
+    authenticated_session = None
+    try:
+        authenticated_session = get_authenticated_session(os.environ.get("FPL_LOGIN"), os.environ.get("FPL_PASSWORD"))
+    except HTTPError:
+        return "Login credentials not recognised"
     end_event = start_event + 3 if end_event is None else end_event
     team_data = optimise_entry(
         team_id,
@@ -51,8 +60,7 @@ def optimise(
         transfer_limit=transfer_limit,
         start_event=start_event,
         end_event=end_event,
-        login=os.environ.get("FPL_LOGIN"),
-        password=os.environ.get("FPL_PASSWORD"),
+        authenticated_session=authenticated_session,
     )
 
     click.echo(pprint(team_data))

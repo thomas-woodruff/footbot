@@ -176,3 +176,33 @@ def get_current_event(bootstrap_data=None):
         current_event = event["id"]
 
     return current_event
+
+
+def get_authenticated_session(login, password, entry):
+    """
+    Log in to FPL using provided credentials
+
+    :param login: FPL login
+    :param password: FPL password
+    :param entry: Team identifier
+    :return: Authenticated session
+    """
+
+    session = requests.session()
+
+    payload = {
+        "redirect_uri": "https://fantasy.premierleague.com/a/login",
+        "app": "plfpl-web",
+        "login": login,
+        "password": password,
+    }
+
+    logger.info("authenticating for entry")
+    session.post("https://users.premierleague.com/accounts/login/", data=payload)
+
+    test_resp = session.get(
+        f"https://fantasy.premierleague.com/api/my-team/{entry}"
+    )
+    test_resp.raise_for_status()
+
+    return session

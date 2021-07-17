@@ -3,6 +3,8 @@ import logging
 from flask import Flask
 from flask import request
 
+from requests.exceptions import HTTPError
+
 from footbot.data import element_data
 from footbot.data import utils
 from footbot.optimiser import team_selector
@@ -168,15 +170,18 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
     if request.data and request.content_type != 'application/json':
         return "Request content-type must be application/json", 400
 
-    login = password = None
+    authenticated_session = None
     try:
         data = request.json
         login = data["login"]
         password = data["password"]
+        authenticated_session = utils.get_authenticated_session(login, password)
     except TypeError:
         pass
     except KeyError:
         return "Data must contain 'login' and 'password'", 400
+    except HTTPError:
+        return "Login credentials not recognised", 400
 
     current_event = utils.get_current_event()
 
@@ -202,8 +207,7 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
             transfer_limit=transfer_limit,
             start_event=start_event,
             end_event=end_event,
-            login=login,
-            password=password,
+            authenticated_session=authenticated_session,
         )
     except Exception as e:
         logger.error(e)
