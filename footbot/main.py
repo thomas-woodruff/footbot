@@ -44,24 +44,24 @@ def update_element_history_fixtures_worker(element, delete=False):
     if delete:
         logger.info(f"deleting element {element} gameweek history")
         utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.element_gameweeks_2021` WHERE element = {element}",
+            f"DELETE FROM `footbot-001.fpl.element_gameweeks_2122` WHERE element = {element}",
             client,
         )
 
     logger.info(f"writing element {element} gameweek history")
-    utils.write_to_table("fpl", "element_gameweeks_2021", element_history_df, client)
+    utils.write_to_table("fpl", "element_gameweeks_2122", element_history_df, client)
     logger.info(f"done writing element {element} gameweek history")
 
     if delete:
         logger.info(f"deleting element {element} fixtures")
         utils.run_query(
-            f"DELETE FROM `footbot-001.fpl.element_future_fixtures_2021` WHERE element = {element}",
+            f"DELETE FROM `footbot-001.fpl.element_future_fixtures_2122` WHERE element = {element}",
             client,
         )
 
     logger.info(f"writing element {element} fixtures")
     utils.write_to_table(
-        "fpl", "element_future_fixtures_2021", element_fixtures_df, client
+        "fpl", "element_future_fixtures_2122", element_fixtures_df, client
     )
     logger.info(f"done writing element {element} fixtures")
 
@@ -80,7 +80,7 @@ def update_element_data_route():
     client = utils.set_up_bigquery()
 
     logger.info("writing element data")
-    utils.write_to_table("fpl", "element_data_2021", element_df, client)
+    utils.write_to_table("fpl", "element_data_2122", element_df, client)
     logger.info("done writing element data")
 
     return "Updated element data, baby"
@@ -102,12 +102,12 @@ def update_element_history_fixtures_route():
 
     logger.info("deleting element gameweek history")
     utils.run_query(
-        "DELETE FROM `footbot-001.fpl.element_gameweeks_2021` WHERE true",
+        "DELETE FROM `footbot-001.fpl.element_gameweeks_2122` WHERE true",
         big_query_client,
     )
     logger.info("deleting element fixtures")
     utils.run_query(
-        "DELETE FROM `footbot-001.fpl.element_future_fixtures_2021` WHERE true",
+        "DELETE FROM `footbot-001.fpl.element_future_fixtures_2122` WHERE true",
         big_query_client,
     )
 
@@ -154,7 +154,7 @@ def update_predictions_route():
     logger.info("writing predictions")
     utils.write_to_table(
         "fpl",
-        "element_gameweeks_predictions_2021_v01",
+        "element_gameweeks_predictions_2122_v01",
         predict_df,
         client,
         write_disposition="WRITE_TRUNCATE",
