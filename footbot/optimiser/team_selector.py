@@ -318,6 +318,13 @@ def get_sorted_safe_web_names(players, is_sorted=True):
         return [p["safe_web_name"] for p in players]
 
 
+def get_readable_optimiser_results(optimiser_results):
+    readable_results = dict()
+    for k, v in optimiser_results.items():
+        readable_results[k] = get_sorted_safe_web_names(v)
+    return readable_results
+
+
 def optimise_entry(
     entry,
     total_budget=1000,
@@ -330,6 +337,7 @@ def optimise_entry(
     start_event=1,
     end_event=38,
     authenticated_session=None,
+    readable=True,
 ):
     """
     Select the optimal team and transfers for a specified entry.
@@ -347,6 +355,7 @@ def optimise_entry(
     :param start_event: Start of event range to optimiser over
     :param end_event: End of event range to optimiser over
     :param authenticated_session: Requests session authenticated with FPL credentials
+    :param readable: Return optimiser results in readable format
     :return: Dictionary of team selection decisions
     """
 
@@ -396,7 +405,7 @@ def optimise_entry(
     transfers_in = [p for p in players if p["element"] in transfers["transfers_in"]]
     transfers_out = [p for p in players if p["element"] in transfers["transfers_out"]]
 
-    return {
+    optimiser_results = {
         "first_team": first_team,
         "bench": bench,
         "captain": captain,
@@ -405,9 +414,7 @@ def optimise_entry(
         "transfers_out": transfers_out,
     }
 
-
-def get_readable_optimiser_results(optimiser_results):
-    readable_results = dict()
-    for k, v in optimiser_results.items():
-        readable_results[k] = get_sorted_safe_web_names(v)
-    return readable_results
+    if readable:
+        return get_readable_optimiser_results(optimiser_results)
+    else:
+        return optimiser_results

@@ -195,7 +195,7 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
     end_event = int(request.args.get("end_event", current_event + 1))
 
     try:
-        optimiser_results = optimise_entry(
+        return optimise_entry(
             entry,
             total_budget=total_budget,
             first_team_factor=first_team_factor,
@@ -208,11 +208,10 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
             end_event=end_event,
             authenticated_session=authenticated_session,
         )
-        return team_selector.get_readable_optimiser_results(optimiser_results)
 
     except Exception as e:
         logger.error(e)
-        return "Uh oh!"
+        return "Uh oh!", 500
 
 
 if __name__ == "__main__":
