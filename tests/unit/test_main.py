@@ -45,8 +45,7 @@ def test_optimise_team_route_public(flask_app):
             transfer_limit=20,
             start_event=10,
             end_event=20,
-            login=None,
-            password=None,
+            authenticated_session=None,
         )
 
 
@@ -55,7 +54,7 @@ def test_optimise_team_route_private_bad_data(flask_app):
     with flask_app.test_request_context(json={"foo": "bar"}):
         resp, code = optimise_team_route(1234, optimise_entry=optimise_entry)
     assert code == 400
-    assert resp == 'Data must contain \'login\' and \'password\''
+    assert resp == "Data must contain 'login' and 'password'"
 
 
 def test_optimise_team_route_bad_content_type(flask_app):
@@ -66,7 +65,18 @@ def test_optimise_team_route_bad_content_type(flask_app):
     assert resp == "Request content-type must be application/json"
 
 
+def test_optimise_team_route_private_bad_credentials(flask_app):
+    # todo: fails, don't know why...
+    optimise_entry = Mock()
+    with flask_app.test_request_context(json={"login": "foo", "password": "bar"}):
+        resp, code = optimise_team_route(1234, optimise_entry=optimise_entry)
+    assert code == 400
+    assert resp == "Login credentials not recognised"
+
+
 def test_optimise_team_route_private(flask_app):
+    # todo: this test is failing because we've moved the auth outside of optimise_entry
+    # as such, no the auth fails before the function is called
     optimise_entry = Mock()
     with flask_app.test_request_context(
         json={"login": "login", "password": "password"}
@@ -86,6 +96,5 @@ def test_optimise_team_route_private(flask_app):
             transfer_limit=ANY,
             start_event=ANY,
             end_event=ANY,
-            login="login",
-            password="password",
+            authenticated_session="foo",
         )

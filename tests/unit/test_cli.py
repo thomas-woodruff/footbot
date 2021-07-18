@@ -46,6 +46,5 @@ def test_optimise_team():
             transfer_limit=4,
             start_event=5,
             end_event=6,
-            login=None,
-            password=None,
+            authenticated_session=None,
         )

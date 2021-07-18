@@ -200,9 +200,7 @@ def get_authenticated_session(login, password, entry):
     logger.info("authenticating for entry")
     session.post("https://users.premierleague.com/accounts/login/", data=payload)
 
-    test_resp = session.get(
-        f"https://fantasy.premierleague.com/api/my-team/{entry}"
-    )
+    test_resp = session.get(f"https://fantasy.premierleague.com/api/my-team/{entry}")
     test_resp.raise_for_status()
 
     return session

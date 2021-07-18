@@ -290,7 +290,7 @@ def get_public_entry_data(entry):
 
     current_event = get_current_event()
     if current_event == 0:
-        raise Exception('No publicly available data before season starts')
+        raise Exception("No publicly available data before season starts")
 
     logger.info("getting entry data")
     entry_request = requests.get(
@@ -301,11 +301,10 @@ def get_public_entry_data(entry):
     return public_data
 
 
-def get_sorted_safe_web_names(elements, players, is_sorted=True):
+def get_sorted_safe_web_names(players, is_sorted=True):
     """
     Get players names for a list of elements and sort by position.
 
-    :param elements: An array of elements
     :param players: An array of dictionaries of player data
     :param is_sorted: Optionally sort by position
     :return: An array of names ordered by position
@@ -313,14 +312,10 @@ def get_sorted_safe_web_names(elements, players, is_sorted=True):
 
     if is_sorted:
         return [
-            i["safe_web_name"]
-            for i in sorted(players, key=lambda x: x["element_type"])
-            if i["element"] in elements
+            i["safe_web_name"] for i in sorted(players, key=lambda x: x["element_type"])
         ]
     else:
-        return [
-            p["safe_web_name"] for e in elements for p in players if e == p["element"]
-        ]
+        return [p["safe_web_name"] for p in players]
 
 
 def optimise_entry(
@@ -394,12 +389,12 @@ def optimise_entry(
         transfer_limit=transfer_limit,
     )
 
-    first_team = [p for p in players if p['element'] in first_team]
-    bench = [p for p in players if p['element'] in bench]
-    captain = [p for p in players if p['element'] in captain]
-    vice = [p for p in players if p['element'] in vice]
-    transfers_in = [p for p in players if p['element'] in transfers['transfers_in']]
-    transfers_out = [p for p in players if p['element'] in transfers['transfers_out']]
+    first_team = [p for p in players if p["element"] in first_team]
+    bench = [p for p in players if p["element"] in bench]
+    captain = [p for p in players if p["element"] in captain]
+    vice = [p for p in players if p["element"] in vice]
+    transfers_in = [p for p in players if p["element"] in transfers["transfers_in"]]
+    transfers_out = [p for p in players if p["element"] in transfers["transfers_out"]]
 
     return {
         "first_team": first_team,
@@ -409,3 +404,10 @@ def optimise_entry(
         "transfers_in": transfers_in,
         "transfers_out": transfers_out,
     }
+
+
+def get_readable_optimiser_results(optimiser_results):
+    readable_results = dict()
+    for k, v in optimiser_results.items():
+        readable_results[k] = get_sorted_safe_web_names(v)
+    return readable_results

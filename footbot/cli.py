@@ -3,14 +3,12 @@ import os
 from pprint import pprint
 from typing import Optional
 
+import click
 from requests.exceptions import HTTPError
 
-import click
-
+from .data.utils import get_authenticated_session
 from .main import app
 from .optimiser.team_selector import optimise_entry
-from .data.utils import get_authenticated_session
-
 
 root = logging.getLogger()
 logger = logging.getLogger(__name__)
@@ -30,7 +28,7 @@ def serve(host: int, port: int):
 
 
 @cli.command()
-@click.argument("team_id", type=int, nargs=1)
+@click.argument("entry", type=int, nargs=1)
 @click.argument("start_event", type=int, nargs=1)
 @click.option("--end-event", type=int, default=None)
 @click.option("--total-budget", type=int, default=1000)
@@ -38,7 +36,7 @@ def serve(host: int, port: int):
 @click.option("--transfer-penalty", type=float, default=0)
 @click.option("--transfer-limit", type=int, default=1)
 def optimise(
-    team_id: int,
+    entry: int,
     start_event: int,
     total_budget: int,
     bench_factor: float,
@@ -47,13 +45,16 @@ def optimise(
     end_event: Optional[int] = None,
 ):
     authenticated_session = None
-    try:
-        authenticated_session = get_authenticated_session(os.environ.get("FPL_LOGIN"), os.environ.get("FPL_PASSWORD"))
-    except HTTPError:
-        return "Login credentials not recognised"
+    login = os.environ.get("FPL_LOGIN")
+    password = os.environ.get("FPL_PASSWORD")
+    if login and password:
+        try:
+            authenticated_session = get_authenticated_session(login, password, entry)
+        except HTTPError:
+            logger.info("Login credentials not recognised")
     end_event = start_event + 3 if end_event is None else end_event
     team_data = optimise_entry(
-        team_id,
+        entry,
         total_budget=total_budget,
         bench_factor=bench_factor,
         transfer_penalty=transfer_penalty,

@@ -2,7 +2,6 @@ import logging
 
 from flask import Flask
 from flask import request
-
 from requests.exceptions import HTTPError
 
 from footbot.data import element_data
@@ -167,7 +166,7 @@ def update_predictions_route():
 @app.route("/optimise_team/<entry>", methods=["GET", "POST"])
 def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
 
-    if request.data and request.content_type != 'application/json':
+    if request.data and request.content_type != "application/json":
         return "Request content-type must be application/json", 400
 
     authenticated_session = None
@@ -175,7 +174,7 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
         data = request.json
         login = data["login"]
         password = data["password"]
-        authenticated_session = utils.get_authenticated_session(login, password)
+        authenticated_session = utils.get_authenticated_session(login, password, entry)
     except TypeError:
         pass
     except KeyError:
@@ -196,7 +195,7 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
     end_event = int(request.args.get("end_event", current_event + 1))
 
     try:
-        return optimise_entry(
+        optimiser_results = optimise_entry(
             entry,
             total_budget=total_budget,
             first_team_factor=first_team_factor,
@@ -209,6 +208,8 @@ def optimise_team_route(entry, optimise_entry=team_selector.optimise_entry):
             end_event=end_event,
             authenticated_session=authenticated_session,
         )
+        return team_selector.get_readable_optimiser_results(optimiser_results)
+
     except Exception as e:
         logger.error(e)
         return "Uh oh!"

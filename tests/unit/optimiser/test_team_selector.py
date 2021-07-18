@@ -4,6 +4,7 @@ import pytest
 from footbot.optimiser.team_selector import construct_player_position_weights
 from footbot.optimiser.team_selector import construct_player_team_weights
 from footbot.optimiser.team_selector import get_elements_from_vector
+from footbot.optimiser.team_selector import get_readable_optimiser_results
 from footbot.optimiser.team_selector import get_sorted_safe_web_names
 from footbot.optimiser.team_selector import select_team
 from footbot.optimiser.team_selector import sort_bench
@@ -497,16 +498,61 @@ def test_select_team_bench_order(players):
 
 def test_get_sorted_safe_web_names(players):
 
-    assert get_sorted_safe_web_names([16, 10, 4, 1], players) == [
+    assert get_sorted_safe_web_names(
+        [
+            players[15],
+            players[9],
+            players[3],
+            players[0],
+        ]
+    ) == [
         "alex",
         "dan",
         "jack",
         "pete",
     ]
 
-    assert get_sorted_safe_web_names([16, 10, 4, 1], players, is_sorted=False) == [
+    assert get_sorted_safe_web_names(
+        [
+            players[15],
+            players[9],
+            players[3],
+            players[0],
+        ],
+        is_sorted=False,
+    ) == [
         "pete",
         "jack",
         "dan",
         "alex",
     ]
+
+
+def test_get_readable_optimiser_results(players):
+    optimiser_results = dict()
+    first_team = [1, 2, 3]
+    bench = [4, 5]
+    captain = [1]
+    vice = [2]
+    transfers_in = [6]
+    transfers_out = [5]
+
+    optimiser_results["first_team"] = [p for p in players if p["element"] in first_team]
+    optimiser_results["bench"] = [p for p in players if p["element"] in bench]
+    optimiser_results["captain"] = [p for p in players if p["element"] in captain]
+    optimiser_results["vice"] = [p for p in players if p["element"] in vice]
+    optimiser_results["transfers_in"] = [
+        p for p in players if p["element"] in transfers_in
+    ]
+    optimiser_results["transfers_out"] = [
+        p for p in players if p["element"] in transfers_out
+    ]
+
+    assert get_readable_optimiser_results(optimiser_results) == {
+        "first_team": ["alex", "ben", "carl"],
+        "bench": ["dan", "ed"],
+        "captain": ["alex"],
+        "vice": ["ben"],
+        "transfers_in": ["fred"],
+        "transfers_out": ["ed"],
+    }
