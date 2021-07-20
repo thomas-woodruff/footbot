@@ -1,6 +1,6 @@
 import pytest
 
-from footbot.optimiser.transfers import construct_transfers_dict
+from footbot.optimiser.transfers import construct_transfers_list
 
 @pytest.fixture
 def transfers_in():
@@ -47,8 +47,8 @@ def transfers_out():
     return transfers_out
 
 
-def test_construct_transfers_dict(transfers_in, transfers_out):
-    assert construct_transfers_dict(transfers_in, transfers_out) == [
+def test_construct_transfers_list(transfers_in, transfers_out):
+    assert construct_transfers_list(transfers_in, transfers_out) == [
         {
             "element_in": 1,
             "element_out": 3,
@@ -63,4 +63,4 @@ def test_construct_transfers_dict(transfers_in, transfers_out):
         }
     ]
 
-    assert construct_transfers_dict([], []) == []
+    assert construct_transfers_list([], []) == []

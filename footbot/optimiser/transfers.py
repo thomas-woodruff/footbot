@@ -14,7 +14,7 @@ from footbot.data.utils import get_current_event
 logger = logging.getLogger(__name__)
 
 
-def construct_transfers_dict(transfers_in, transfers_out):
+def construct_transfers_list(transfers_in, transfers_out):
     transfers = []
     for transfer_in, transfer_out in zip(transfers_in, transfers_out):
         transfer = {
@@ -30,7 +30,7 @@ def construct_transfers_dict(transfers_in, transfers_out):
 
 def make_transfers(current_event, entry, transfers_in, transfers_out, authenticated_session):
 
-    transfers = construct_transfers_dict(transfers_in, transfers_out)
+    transfers = construct_transfers_list(transfers_in, transfers_out)
     payload = {
         "entry": entry,
         "event": current_event + 1,
