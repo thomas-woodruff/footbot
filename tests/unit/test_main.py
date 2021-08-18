@@ -55,7 +55,7 @@ def test_optimise_team_route_private_bad_data(flask_app):
     with flask_app.test_request_context(json={"foo": "bar"}):
         resp, code = optimise_team_route(1234, optimise_entry=optimise_entry)
     assert code == 400
-    assert resp == 'Data must contain \'login\' and \'password\''
+    assert resp == "Data must contain 'login' and 'password'"
 
 
 def test_optimise_team_route_bad_content_type(flask_app):

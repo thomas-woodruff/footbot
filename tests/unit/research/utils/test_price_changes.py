@@ -5,9 +5,8 @@ from footbot.research.utils.price_changes import calculate_selling_price
 from footbot.research.utils.price_changes import calculate_team_value
 from footbot.research.utils.price_changes import get_player_value
 from footbot.research.utils.price_changes import update_player_value
-from footbot.research.utils.price_changes import (
-    update_player_values_with_selling_prices,
-)
+from footbot.research.utils.price_changes import \
+    update_player_values_with_selling_prices
 from footbot.research.utils.price_changes import update_purchase_prices
 
 

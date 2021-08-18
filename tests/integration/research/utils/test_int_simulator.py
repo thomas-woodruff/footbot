@@ -72,7 +72,7 @@ def test_get_all_elements_df(all_elements_df):
         "team",
         "value",
     }
-    assert len(all_elements_df) == 23534
+    assert len(all_elements_df) == 23572
     assert len(all_elements_df) == len(
         all_elements_df[["event", "element_all"]].drop_duplicates()
     )
@@ -86,7 +86,7 @@ def test_get_all_results_df(all_results_df):
         "minutes",
         "total_points",
     }
-    assert len(all_results_df) == 22275
+    assert len(all_results_df) == 22313
     assert len(all_results_df) == len(
         all_results_df[["event", "element_all"]].drop_duplicates()
     )
@@ -111,40 +111,40 @@ def test_make_transfers_from_scratch(elements_df, predictions_df):
     )
 
     assert set(existing_squad) == {
-        416,
-        669,
-        841,
-        659,
-        717,
-        51,
-        1051,
-        273,
         126,
         304,
-        67,
-        771,
-        451,
+        273,
+        51,
+        659,
+        717,
+        858,
+        926,
+        1087,
+        555,
+        585,
+        82,
+        978,
+        951,
         714,
-        1022,
     }
     assert bank == 0
     assert transfers == {
         "transfers_in": {
-            416,
-            67,
-            771,
-            451,
-            841,
-            714,
-            717,
+            126,
             304,
             273,
-            659,
             51,
-            1022,
-            1051,
-            669,
-            126,
+            659,
+            717,
+            858,
+            926,
+            1087,
+            555,
+            585,
+            82,
+            978,
+            951,
+            714,
         },
         "transfers_out": set(),
     }
@@ -157,21 +157,21 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
         events_to_look_ahead=0,
         weight=1.0,
         existing_squad=[
-            213,
-            78,
-            1175,
-            295,
-            753,
-            1105,
-            1200,
-            266,
-            512,
-            394,
-            312,
-            463,
-            401,
+            126,
+            304,
+            273,
+            51,
+            659,
             717,
-            118,
+            858,
+            926,
+            1087,
+            555,
+            585,
+            82,
+            978,
+            951,
+            139,
         ],
         total_budget=1000,
         first_team_factor=0.9,
@@ -185,24 +185,24 @@ def test_make_transfers_from_existing(elements_df, predictions_df):
     )
 
     assert set(existing_squad) == {
-        1200,
-        213,
-        266,
-        512,
-        841,
-        1175,
-        118,
-        394,
+        126,
+        304,
+        273,
+        51,
+        659,
         717,
-        312,
-        78,
-        401,
-        753,
-        463,
-        1105,
+        858,
+        926,
+        1087,
+        555,
+        585,
+        82,
+        978,
+        951,
+        714,
     }
-    assert bank == 120
-    assert transfers == {"transfers_in": {841}, "transfers_out": {295}}
+    assert bank == 0
+    assert transfers == {"transfers_in": {714}, "transfers_out": {139}}
 
 
 def test_make_team_selection(elements_df, predictions_df):
@@ -210,21 +210,21 @@ def test_make_team_selection(elements_df, predictions_df):
     first_team, bench, captain, vice = make_team_selection(
         event=test_event,
         existing_squad=[
-            213,
-            78,
-            1175,
-            295,
-            753,
-            1105,
-            1200,
-            266,
-            512,
-            394,
-            312,
-            463,
-            401,
+            126,
+            304,
+            273,
+            51,
+            659,
             717,
-            118,
+            858,
+            926,
+            1087,
+            555,
+            585,
+            82,
+            978,
+            951,
+            714,
         ],
         total_budget=1000,
         first_team_factor=0.9,
@@ -235,10 +235,10 @@ def test_make_team_selection(elements_df, predictions_df):
         elements_df=elements_df,
     )
 
-    assert set(first_team) == {1200, 213, 266, 512, 1175, 118, 394, 717, 312, 78, 1105}
-    assert set(bench) == {295, 401, 753, 463}
-    assert set(captain) == {717}
-    assert set(vice) == {312}
+    assert set(first_team) == {126, 304, 273, 51, 659, 717, 858, 926, 1087, 555, 585}
+    assert set(bench) == {82, 978, 951, 714}
+    assert set(captain) == {585}
+    assert set(vice) == {555}
 
 
 def get_predictions_df(season, event, client):
@@ -334,7 +334,7 @@ def test_simulate_events(all_elements_df, all_predictions_df, all_results_df, cl
 
     total_event_points = sum(i["event_points"] for i in simulation_results_arr)
 
-    assert total_event_points == 160
+    assert total_event_points == 134
 
 
 def test_simulate_events_wildcard(

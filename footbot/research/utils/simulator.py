@@ -9,9 +9,8 @@ from footbot.data.utils import write_to_table
 from footbot.optimiser.team_selector import select_team
 from footbot.research.utils.calculate_points import calculate_points
 from footbot.research.utils.price_changes import calculate_team_value
-from footbot.research.utils.price_changes import (
-    update_player_values_with_selling_prices,
-)
+from footbot.research.utils.price_changes import \
+    update_player_values_with_selling_prices
 from footbot.research.utils.subs import make_subs
 from footbot.research.utils.subs import pick_captain
 
@@ -351,15 +350,12 @@ def make_team_selection(
     return first_team, bench, captain, vice
 
 
-def make_new_predictions_event(
-    season, event, get_predictions_df, client
-):
+def make_new_predictions_event(season, event, get_predictions_df, client):
     logger.info(f"making predictions as of event {event}")
     predictions_df = get_predictions_df(season, event, client)
     predictions_df["prediction_event"] = event
 
     return predictions_df
-
 
 
 def make_new_predictions(
@@ -380,7 +376,9 @@ def make_new_predictions(
     predictions_df_arr = []
 
     for event in events:
-        predictions_df = make_new_predictions_event(season, event, get_predictions_df, client)
+        predictions_df = make_new_predictions_event(
+            season, event, get_predictions_df, client
+        )
         predictions_df_arr.append(predictions_df)
 
     all_predictions_df = pd.concat(predictions_df_arr).reset_index(drop=True)
