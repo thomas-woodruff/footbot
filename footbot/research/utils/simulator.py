@@ -1,10 +1,12 @@
 import logging
+import multiprocessing
 import os
 from pathlib import Path
 
 import pandas as pd
 
 from footbot.data.utils import run_templated_query
+from footbot.data.utils import set_up_bigquery
 from footbot.data.utils import write_to_table
 from footbot.optimiser.team_selector import select_team
 from footbot.research.utils.calculate_points import calculate_points
@@ -350,7 +352,21 @@ def make_team_selection(
     return first_team, bench, captain, vice
 
 
-def make_new_predictions_event(season, event, get_predictions_df, client):
+def make_new_predictions_event(season, event, get_predictions_df):
+    """
+    Make predictions for a given gameweek.
+    :param season: Gameweek season
+    :param event: Gameweek event
+    :param get_predictions_df: Function to make predictions
+    :return: Dataframe of points predictions by player, gameweek, prediction event
+    """
+
+    secrets_path = os.path.join(
+        Path(__file__).parents[3], "secrets/service_account.json"
+    )
+    # we instantiate a new client for each event as a client object cannot be pickled
+    client = set_up_bigquery(secrets_path)
+
     logger.info(f"making predictions as of event {event}")
     predictions_df = get_predictions_df(season, event, client)
     predictions_df["prediction_event"] = event
@@ -359,7 +375,14 @@ def make_new_predictions_event(season, event, get_predictions_df, client):
 
 
 def make_new_predictions(
-    season, events, get_predictions_df, dataset, table, save_new_predictions, client
+    season,
+    events,
+    get_predictions_df,
+    dataset,
+    table,
+    save_new_predictions,
+    client,
+    processes=1,
 ):
     """
     Retrieve existing predictions from BigQuery or make new ones and save them to BigQuery.
@@ -370,16 +393,20 @@ def make_new_predictions(
     :param table: BigQuery table to write to
     :param save_new_predictions: Boolean indicating whether new predictions should be saved
     :param client: BigQuery client
+    :param processes: Number of parallel processes to use. If -1, use all CPUs
     :return: Dataframe of points predictions by player, gameweek, prediction event
     """
 
-    predictions_df_arr = []
+    if processes == -1:
+        processes = multiprocessing.cpu_count()
 
-    for event in events:
-        predictions_df = make_new_predictions_event(
-            season, event, get_predictions_df, client
-        )
-        predictions_df_arr.append(predictions_df)
+    num_events = len(events)
+    seasons = [season] * num_events
+    get_predictions_dfs = [get_predictions_df] * num_events
+    args = zip(seasons, events, get_predictions_dfs)
+
+    with multiprocessing.Pool(processes=processes) as pool:
+        predictions_df_arr = pool.starmap(make_new_predictions_event, args)
 
     all_predictions_df = pd.concat(predictions_df_arr).reset_index(drop=True)
 
