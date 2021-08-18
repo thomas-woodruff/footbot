@@ -351,6 +351,17 @@ def make_team_selection(
     return first_team, bench, captain, vice
 
 
+def make_new_predictions_event(
+    season, event, get_predictions_df, client
+):
+    logger.info(f"making predictions as of event {event}")
+    predictions_df = get_predictions_df(season, event, client)
+    predictions_df["prediction_event"] = event
+
+    return predictions_df
+
+
+
 def make_new_predictions(
     season, events, get_predictions_df, dataset, table, save_new_predictions, client
 ):
@@ -369,12 +380,7 @@ def make_new_predictions(
     predictions_df_arr = []
 
     for event in events:
-        logger.info(f"making predictions as of event {event}")
-
-        predictions_df = get_predictions_df(season, event, client)
-
-        predictions_df["prediction_event"] = event
-
+        predictions_df = make_new_predictions_event(season, event, get_predictions_df, client)
         predictions_df_arr.append(predictions_df)
 
     all_predictions_df = pd.concat(predictions_df_arr).reset_index(drop=True)
