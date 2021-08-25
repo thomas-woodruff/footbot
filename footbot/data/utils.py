@@ -48,12 +48,14 @@ def set_up_tasks(secrets_path="./secrets/service_account.json"):
     return tasks_v2.CloudTasksClient()
 
 
-def set_up_bigquery(secrets_path="./secrets/service_account.json"):
+def set_up_bigquery():
     """set up BigQuery client"""
 
-    logger.info("setting up BigQuery client")
+    # logger.info("setting up BigQuery client")
     # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = secrets_path
-    return bigquery.Client()
+    # return bigquery.Client()
+
+    print('I am a lovely donkey')
 
 
 def run_query(sql, client):
