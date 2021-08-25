@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="footbot",
-    version="0.2.3",
+    version="0.2.4",
     url='https://github.com/thomas-woodruff/footbot',
     author='thomas-woodruff',
     license='All rights reserved.',

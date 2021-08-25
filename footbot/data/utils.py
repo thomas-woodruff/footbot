@@ -53,9 +53,7 @@ def set_up_bigquery():
 
     # logger.info("setting up BigQuery client")
     # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = secrets_path
-    # return bigquery.Client()
-
-    print('I am a lovely donkey')
+    return bigquery.Client()
 
 
 def run_query(sql, client):
