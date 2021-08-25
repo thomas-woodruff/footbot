@@ -52,7 +52,7 @@ def set_up_bigquery(secrets_path="./secrets/service_account.json"):
     """set up BigQuery client"""
 
     logger.info("setting up BigQuery client")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = secrets_path
+    # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = secrets_path
     return bigquery.Client()
 
 

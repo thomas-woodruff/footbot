@@ -361,11 +361,11 @@ def make_new_predictions_event(season, event, get_predictions_df):
     :return: Dataframe of points predictions by player, gameweek, prediction event
     """
 
-    secrets_path = os.path.join(
-        Path(__file__).parents[3], "secrets/service_account.json"
-    )
+    # secrets_path = os.path.join(
+    #     Path(__file__).parents[3], "secrets/service_account.json"
+    # )
     # we instantiate a new client for each event as a client object cannot be pickled
-    client = set_up_bigquery(secrets_path)
+    client = set_up_bigquery()
 
     logger.info(f"making predictions as of event {event}")
     predictions_df = get_predictions_df(season, event, client)
