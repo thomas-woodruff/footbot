@@ -334,7 +334,7 @@ def test_simulate_events(all_elements_df, all_predictions_df, all_results_df, cl
 
     total_event_points = sum(i["event_points"] for i in simulation_results_arr)
 
-    assert total_event_points == 134
+    assert total_event_points == 135
 
 
 def test_simulate_events_wildcard(

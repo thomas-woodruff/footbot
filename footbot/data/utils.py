@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+from pathlib import Path
 
 import requests
 import unidecode as u
@@ -48,11 +49,15 @@ def set_up_tasks(secrets_path="./secrets/service_account.json"):
     return tasks_v2.CloudTasksClient()
 
 
-def set_up_bigquery(secrets_path="./secrets/service_account.json"):
+def set_up_bigquery(use_secrets=True):
     """set up BigQuery client"""
 
-    logger.info("setting up BigQuery client")
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = secrets_path
+    if use_secrets:
+        secrets_path = os.path.join(
+            Path(__file__).parents[2], "secrets/service_account.json"
+        )
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = secrets_path
+
     return bigquery.Client()
 
 

@@ -352,20 +352,19 @@ def make_team_selection(
     return first_team, bench, captain, vice
 
 
-def make_new_predictions_event(season, event, get_predictions_df):
+def make_new_predictions_event(season, event, get_predictions_df, use_secrets=False):
     """
     Make predictions for a given gameweek.
     :param season: Gameweek season
     :param event: Gameweek event
     :param get_predictions_df: Function to make predictions
+    :param use_secrets: Whether to use footbot secrets or not
     :return: Dataframe of points predictions by player, gameweek, prediction event
     """
 
-    secrets_path = os.path.join(
-        Path(__file__).parents[3], "secrets/service_account.json"
-    )
     # we instantiate a new client for each event as a client object cannot be pickled
-    client = set_up_bigquery(secrets_path)
+    # as we tend to use this in google AI notebooks, we use the default env secrets
+    client = set_up_bigquery(use_secrets=use_secrets)
 
     logger.info(f"making predictions as of event {event}")
     predictions_df = get_predictions_df(season, event, client)
