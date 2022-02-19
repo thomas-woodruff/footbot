@@ -43,7 +43,7 @@ urllib3==1.25.8
 Werkzeug==0.16.1
 
 # test dependencies
-pytest
-isort
-black
-flake8
+pytest==6.2.5
+isort==5.10.1
+black==20.8b0
+flake8==4.0.1
