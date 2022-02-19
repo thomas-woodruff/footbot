@@ -273,6 +273,9 @@ def get_private_entry_data(entry, login, password):
 
     session = requests.session()
 
+    headers = {
+        'User-Agent': 'iphone',
+        }
     payload = {
         "redirect_uri": "https://fantasy.premierleague.com/a/login",
         "app": "plfpl-web",
@@ -281,7 +284,7 @@ def get_private_entry_data(entry, login, password):
     }
 
     logger.info("authenticating for entry")
-    resp = session.post("https://users.premierleague.com/accounts/login/", data=payload)
+    resp = session.post("https://users.premierleague.com/accounts/login/", headers=headers, data=payload)
     resp.raise_for_status()
 
     logger.info("getting private entry data")
